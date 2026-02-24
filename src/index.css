@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f9fafb;
+  --card: #ffffff;
+  --text: #101828;
+  --muted: #6a7282;
+  --border: #e5e7eb;
+  --panel: rgba(255, 255, 255, 0.72);
+
+  --brand: #003983;
+  --brand-bright: #1447e6;
+  --accent: #ff6b35;
+
+  --noise-opacity: 0.03;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  font-family: "DM Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  opacity: 0;
+}
+
+/* Noise overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: var(--noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    opacity: 0.015;
+  }
+
+  .animate-ticker {
+    animation: none !important;
+    transform: translateX(0) !important;
+  }
+}
+
+/* Cursor */
+@media (pointer: fine) {
+  html,
+  body,
+  a,
+  button {
+    cursor: none;
+  }
+}
+
+/* Better selection contrast on pale backgrounds */
+::selection {
+  background: rgba(20, 71, 230, 0.18);
+}
+
+/* Optional: cleaner scrollbars */
+@supports (scrollbar-color: auto) {
+  * {
+    scrollbar-color: rgba(16, 24, 40, 0.25) transparent;
+    scrollbar-width: thin;
+  }
+}
