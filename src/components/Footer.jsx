@@ -1,18 +1,23 @@
+import { SmartLink } from "./SmartLink";
+
 export function Footer({ links }) {
   const year = new Date().getFullYear();
 
   const product = [
-    { label: "Features", href: "#features" },
-    { label: "Workflow", href: "#process" },
-    { label: "Exports", href: "#demo" },
-    { label: "FAQ", href: "#faq" },
+    { label: "Features", href: "/#features" },
+    { label: "Workflow", href: "/#process" },
+    { label: "Exports", href: "/#demo" },
+    { label: "FAQ", href: "/#faq" },
   ];
 
   const modules = [
-    { label: "Routes", href: "#features" },
-    { label: "Tasks", href: "#features" },
-    { label: "Analytics", href: "#features" },
-    { label: "QPort AI", href: "#features" },
+    // Match the QPort web app sidebar labels 1:1.
+    { label: "Routes", href: "/routes" },
+    { label: "Vehicles", href: "/vehicles" },
+    { label: "Analytics", href: "/analytics" },
+    { label: "Tasks", href: "/tasks" },
+    { label: "Teams", href: "/teams" },
+    { label: "Qport.ai", href: "/qport-ai" },
   ];
 
   return (
@@ -40,9 +45,9 @@ export function Footer({ links }) {
                 <ul className="mt-4 space-y-3">
                   {product.map((l) => (
                     <li key={l.href}>
-                      <a className="text-sm text-white/70 hover:text-white" href={l.href}>
+                      <SmartLink className="text-sm text-white/70 hover:text-white" href={l.href}>
                         {l.label}
-                      </a>
+                      </SmartLink>
                     </li>
                   ))}
                 </ul>
@@ -53,9 +58,9 @@ export function Footer({ links }) {
                 <ul className="mt-4 space-y-3">
                   {modules.map((l) => (
                     <li key={l.href}>
-                      <a className="text-sm text-white/70 hover:text-white" href={l.href}>
+                      <SmartLink className="text-sm text-white/70 hover:text-white" href={l.href}>
                         {l.label}
-                      </a>
+                      </SmartLink>
                     </li>
                   ))}
                 </ul>
@@ -67,9 +72,9 @@ export function Footer({ links }) {
               <ul className="mt-4 space-y-3">
                 {(links || []).map((l) => (
                   <li key={l.href}>
-                    <a className="text-sm text-white/70 hover:text-white" href={l.href}>
+                    <SmartLink className="text-sm text-white/70 hover:text-white" href={l.href}>
                       {l.label}
-                    </a>
+                    </SmartLink>
                   </li>
                 ))}
               </ul>
@@ -84,4 +89,3 @@ export function Footer({ links }) {
     </footer>
   );
 }
-

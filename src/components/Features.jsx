@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SmartLink } from "./SmartLink";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -160,8 +161,9 @@ function TelemetryTypewriter({ prefersReducedMotion }) {
 function SignalGraph({ prefersReducedMotion }) {
   const wrapRef = useRef(null);
   const pathRef = useRef(null);
-  const [ready, setReady] = useState(false);
+  const fillRef = useRef(null);
   const [tip, setTip] = useState(null);
+  const hideTipRef = useRef(null);
 
   const points = useMemo(
     () => [
@@ -173,33 +175,94 @@ function SignalGraph({ prefersReducedMotion }) {
     []
   );
 
+  const showTip = (p, { autoHide = false } = {}) => {
+    setTip(p);
+    if (hideTipRef.current) window.clearTimeout(hideTipRef.current);
+    if (autoHide) {
+      hideTipRef.current = window.setTimeout(() => setTip(null), 2200);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hideTipRef.current) window.clearTimeout(hideTipRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     const path = pathRef.current;
     if (!path) return;
+    const fill = fillRef.current;
 
     const len = path.getTotalLength();
     path.style.strokeDasharray = `${len}`;
     path.style.strokeDashoffset = `${len}`;
+    if (fill) fill.style.opacity = "0";
 
     if (prefersReducedMotion) {
       path.style.strokeDashoffset = "0";
-      setReady(true);
+      if (fill) fill.style.opacity = "1";
       return;
     }
 
     const ctx = gsap.context(() => {
-      gsap.to(path, { strokeDashoffset: 0, duration: 1.1, ease: "power2.out", onComplete: () => setReady(true) });
+      const tl = gsap.timeline({
+        scrollTrigger: { trigger: wrapRef.current, start: "top 78%", once: true },
+      });
+
+      const endRing = wrapRef.current?.querySelector("[data-signal-end='1']");
+
+      tl.to(path, { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" }, 0);
+
+      if (fill) tl.to(fill, { opacity: 1, duration: 0.6, ease: "power1.out" }, 0.18);
+
+      // Minimal emphasis: one quiet pulse on the final point (no looping, no scan).
+      if (endRing) {
+        tl.fromTo(
+          endRing,
+          { strokeOpacity: 0.12 },
+          {
+            strokeOpacity: 0.32,
+            duration: 1.05,
+            ease: "power1.inOut",
+            yoyo: true,
+            repeat: 1,
+          },
+          0.35
+        );
+      }
     }, wrapRef);
 
     return () => ctx.revert();
   }, [prefersReducedMotion]);
 
+  // Note: SVG path `d` does not support percentage coordinates reliably across browsers.
+  // We keep everything in viewBox units (0..100 / 0..80).
   const d = useMemo(() => {
-    const toPx = (p) => `${p.x}% ${p.y}%`;
-    return `M ${toPx(points[0])} C ${toPx({ x: 18, y: 70 })}, ${toPx({ x: 26, y: 56 })}, ${toPx(points[1])}
-            S ${toPx({ x: 46, y: 40 })}, ${toPx(points[2])}
-            S ${toPx({ x: 74, y: 26 })}, ${toPx(points[3])}`;
+    const pt = (p) => `${p.x} ${p.y}`;
+    return [
+      `M ${pt(points[0])}`,
+      `C 18 70, 26 56, ${pt(points[1])}`,
+      `S 46 40, ${pt(points[2])}`,
+      `S 74 26, ${pt(points[3])}`,
+    ].join(" ");
   }, [points]);
+
+  const areaD = useMemo(() => {
+    const baseline = 78;
+    const first = points[0];
+    const last = points[points.length - 1];
+    return `${d} L ${last.x} ${baseline} L ${first.x} ${baseline} Z`;
+  }, [d, points]);
+
+  const tipPos = useMemo(() => {
+    if (!tip) return null;
+    // Prevent tooltips from falling off the card edges on mobile.
+    return {
+      x: Math.max(14, Math.min(86, tip.x)),
+      y: Math.max(12, Math.min(76, tip.y)),
+    };
+  }, [tip]);
 
   return (
     <div ref={wrapRef} className="mt-5">
@@ -208,15 +271,64 @@ function SignalGraph({ prefersReducedMotion }) {
         <div className="font-mono text-[11px] text-[var(--muted)]">seconds</div>
       </div>
 
-      <div className="relative mt-3 rounded-2xl border border-[rgba(16,24,40,0.08)] bg-white p-4 shadow-soft">
-        <svg viewBox="0 0 100 80" className="h-[160px] w-full">
+      <div
+        className="relative mt-3 rounded-2xl border border-[rgba(16,24,40,0.08)] bg-white p-4 shadow-soft"
+        onPointerDown={() => setTip(null)}
+      >
+        <svg
+          viewBox="0 0 100 80"
+          className="h-[160px] w-full"
+          role="img"
+          aria-label="Query turnaround trend"
+        >
           <defs>
+            <linearGradient id="qportBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1447e6" stopOpacity="0.06" />
+              <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="100%" stopColor="#ff6b35" stopOpacity="0.05" />
+            </linearGradient>
+
+            <pattern id="qportGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path d="M 10 0 H 0 V 10" fill="none" stroke="#101828" strokeOpacity="0.08" strokeWidth="0.35" />
+            </pattern>
+
             <linearGradient id="qportLine" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="#1447e6" />
               <stop offset="65%" stopColor="#1447e6" />
               <stop offset="100%" stopColor="#ff6b35" />
             </linearGradient>
+
+            <linearGradient id="qportFill" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#1447e6" stopOpacity="0.10" />
+              <stop offset="65%" stopColor="#1447e6" stopOpacity="0.06" />
+              <stop offset="100%" stopColor="#ff6b35" stopOpacity="0.06" />
+            </linearGradient>
           </defs>
+
+          <rect x="0" y="0" width="100" height="80" rx="6" fill="url(#qportBg)" />
+          <rect x="0" y="0" width="100" height="80" rx="6" fill="url(#qportGrid)" opacity="0.85" />
+
+          <line
+            x1="6"
+            y1="78"
+            x2="94"
+            y2="78"
+            stroke="#101828"
+            strokeOpacity="0.10"
+            strokeWidth="0.6"
+            strokeDasharray="2.2 3.2"
+          />
+
+          <path
+            d={d}
+            fill="none"
+            stroke="#101828"
+            strokeOpacity="0.10"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+          />
+
+          <path ref={fillRef} d={areaD} fill="url(#qportFill)" opacity="0" />
 
           <path
             ref={pathRef}
@@ -227,26 +339,55 @@ function SignalGraph({ prefersReducedMotion }) {
             strokeLinecap="round"
           />
 
-          {points.map((p) => (
-            <circle
-              key={p.label}
-              cx={`${p.x}%`}
-              cy={`${p.y}%`}
-              r="2.6"
-              fill="#1447e6"
-              className={ready ? "animate-pulseSoft" : ""}
-              onMouseEnter={() => setTip(p)}
-              onMouseLeave={() => setTip(null)}
-            />
-          ))}
+          {points.map((p) => {
+            const active = tip?.label === p.label;
+            const isEnd = p.label === "QPort AI";
+            return (
+              <g
+                key={p.label}
+                onPointerEnter={() => showTip(p)}
+                onPointerLeave={() => setTip((t) => (t?.label === p.label ? null : t))}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  showTip(p, { autoHide: true });
+                }}
+              >
+                {/* Larger hit target for touch */}
+                <circle cx={p.x} cy={p.y} r="8" fill="transparent" />
+
+                {/* Ring */}
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={active ? "5.6" : "5.0"}
+                  fill="none"
+                  stroke={active ? "#ff6b35" : "#1447e6"}
+                  strokeOpacity={active ? "0.28" : "0.12"}
+                  strokeWidth="0.9"
+                  data-signal-end={isEnd ? "1" : undefined}
+                />
+
+                {/* Core point */}
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={active ? "3.0" : "2.6"}
+                  fill={active ? "#ff6b35" : "#1447e6"}
+                  stroke="#ffffff"
+                  strokeOpacity="0.9"
+                  strokeWidth="1.2"
+                />
+              </g>
+            );
+          })}
         </svg>
 
-        {tip && (
+        {tip && tipPos && (
           <div
             className="pointer-events-none absolute rounded-xl border border-[rgba(16,24,40,0.10)] bg-white px-3 py-2 shadow-soft"
             style={{
-              left: `${tip.x}%`,
-              top: `${tip.y}%`,
+              left: `${tipPos.x}%`,
+              top: `${tipPos.y}%`,
               transform: "translate(-50%, -120%)",
             }}
           >
@@ -357,6 +498,113 @@ export function Features({ prefersReducedMotion }) {
               Dashboards for trends. Conversational queries for the next decision.
             </p>
             <SignalGraph prefersReducedMotion={prefersReducedMotion} />
+          </div>
+        </div>
+
+        {/* App modules map */}
+        <div className="mt-10 rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-[var(--card)] p-6 shadow-lift">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="font-mono text-xs tracking-[0.22em] text-[var(--muted)]">MODULES</p>
+              <h4 className="mt-3 font-display text-2xl font-semibold tracking-[-0.03em] text-[var(--text)]">
+                Built as a system, not a stack of screens.
+              </h4>
+            </div>
+            <p className="max-w-[520px] text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
+              These labels match the QPort dashboard sidebar so teams can orient instantly.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <SmartLink
+              href="/routes"
+              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
+            >
+              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
+                Routes
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Curate corridor geometry. Split, merge, validate. Export driver-ready truth.
+              </p>
+              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
+                OPEN →
+              </div>
+            </SmartLink>
+
+            <SmartLink
+              href="/vehicles"
+              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
+            >
+              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
+                Vehicles
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Encode the fleet you actually run. Keep constraints explicit before dispatch.
+              </p>
+              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
+                OPEN →
+              </div>
+            </SmartLink>
+
+            <SmartLink
+              href="/analytics"
+              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
+            >
+              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
+                Analytics
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Metabase dashboards for route performance, bottlenecks, and operational signals.
+              </p>
+              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
+                OPEN →
+              </div>
+            </SmartLink>
+
+            <SmartLink
+              href="/tasks"
+              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
+            >
+              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
+                Tasks
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Survey, review, and delivery work tracked with ownership, status, and approvals.
+              </p>
+              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
+                OPEN →
+              </div>
+            </SmartLink>
+
+            <SmartLink
+              href="/teams"
+              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
+            >
+              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
+                Teams
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Roles and access that keep field and admin aligned on the same route reality.
+              </p>
+              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
+                OPEN →
+              </div>
+            </SmartLink>
+
+            <SmartLink
+              href="/qport-ai"
+              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
+            >
+              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
+                Qport.ai
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Ask route questions in plain language. Get the next decision faster.
+              </p>
+              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
+                OPEN →
+              </div>
+            </SmartLink>
           </div>
         </div>
       </div>

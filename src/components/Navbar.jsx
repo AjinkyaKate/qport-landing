@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { MagneticButton } from "./MagneticButton";
+import { SmartLink } from "./SmartLink";
 
 export function Navbar({ brand, links, cta }) {
   const [inHero, setInHero] = useState(true);
+  const location = useLocation();
 
   const linkItems = useMemo(() => links || [], [links]);
 
   useEffect(() => {
     const hero = document.getElementById("hero");
-    if (!hero) return;
+    if (!hero) {
+      setInHero(false);
+      return;
+    }
 
     const obs = new IntersectionObserver(
       ([entry]) => setInHero(entry.isIntersecting),
@@ -17,7 +23,7 @@ export function Navbar({ brand, links, cta }) {
 
     obs.observe(hero);
     return () => obs.disconnect();
-  }, []);
+  }, [location.pathname]);
 
   return (
     <div className="fixed left-1/2 top-5 z-[900] w-[min(980px,calc(100vw-2rem))] -translate-x-1/2">
@@ -30,8 +36,8 @@ export function Navbar({ brand, links, cta }) {
         ].join(" ")}
         aria-label="Primary"
       >
-        <a
-          href="#hero"
+        <SmartLink
+          href="/"
           className="flex items-baseline gap-2 font-display text-sm font-semibold tracking-[-0.02em]"
         >
           <span className="text-[1.05rem]">{brand}</span>
@@ -43,11 +49,11 @@ export function Navbar({ brand, links, cta }) {
           >
             Route Intelligence
           </span>
-        </a>
+        </SmartLink>
 
         <div className="hidden items-center gap-4 md:flex">
           {linkItems.map((l) => (
-            <a
+            <SmartLink
               key={l.href}
               href={l.href}
               className={[
@@ -56,7 +62,7 @@ export function Navbar({ brand, links, cta }) {
               ].join(" ")}
             >
               {l.label}
-            </a>
+            </SmartLink>
           ))}
         </div>
 
