@@ -4,9 +4,58 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ModuleHero } from "../components/ModuleHero";
 import { SocialProofBar } from "../components/SocialProofBar";
 import { FinalCTA } from "../components/FinalCTA";
-import { Plus } from "lucide-react";
+import {
+  Activity,
+  ArrowDownToLine,
+  BadgeCheck,
+  BarChart3,
+  Clock,
+  FileText,
+  FileDown,
+  GitMerge,
+  KeyRound,
+  LayoutGrid,
+  Layers,
+  ListChecks,
+  ListTodo,
+  MessageCircle,
+  Plus,
+  Route as RouteIcon,
+  Database,
+  Zap,
+  ClipboardList,
+  CheckCircle2,
+  ScanSearch,
+  Send,
+  ShieldCheck,
+  Shapes,
+  Stamp,
+  Truck,
+  UserCheck,
+  UserPlus,
+  Users,
+  Workflow,
+} from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const OVERVIEW_ICON_SETS = {
+  routes: [RouteIcon, Layers, FileText],
+  vehicles: [Truck, Shapes, UserCheck],
+  analytics: [BarChart3, LayoutGrid, KeyRound],
+  tasks: [ListTodo, Workflow, Stamp],
+  teams: [Users, UserPlus, ShieldCheck],
+  "qport-ai": [MessageCircle, Clock, BadgeCheck],
+};
+
+const WORKFLOW_ICON_SETS = {
+  routes: [ArrowDownToLine, GitMerge, FileDown],
+  vehicles: [Truck, UserCheck, Activity],
+  analytics: [Database, BarChart3, Zap],
+  tasks: [ClipboardList, Workflow, CheckCircle2],
+  teams: [UserPlus, KeyRound, ShieldCheck],
+  "qport-ai": [MessageCircle, ScanSearch, Send],
+};
 
 function Pill({ children, tone = "muted" }) {
   const cls =
@@ -173,18 +222,27 @@ export function ModulePage({ module, introReady, prefersReducedMotion }) {
           />
 
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {(module.overview?.bullets || []).map((b) => (
-              <div
-                key={b}
-                data-reveal
-                className="rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-white p-6 shadow-lift"
-              >
-                <div className="h-10 w-10 rounded-2xl bg-[rgba(20,71,230,0.08)]" aria-hidden="true" />
-                <p className="mt-4 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-                  {b}
-                </p>
-              </div>
-            ))}
+            {(module.overview?.bullets || []).map((b, idx) => {
+              const set = OVERVIEW_ICON_SETS[module.id] || [];
+              const Icon = set[idx] || Activity;
+              return (
+                <div
+                  key={b}
+                  data-reveal
+                  className="rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-white p-6 shadow-lift"
+                >
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[rgba(16,24,40,0.10)] bg-[#f9fafb]"
+                    aria-hidden="true"
+                  >
+                    <Icon size={18} className="text-[var(--brand-bright)]" />
+                  </div>
+                  <p className="mt-4 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
+                    {b}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -259,7 +317,10 @@ export function ModulePage({ module, introReady, prefersReducedMotion }) {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
-              {steps.map((s) => (
+              {steps.map((s, idx) => {
+                const set = WORKFLOW_ICON_SETS[module.id] || [];
+                const Icon = set[idx] || Activity;
+                return (
                 <div
                   key={s.n}
                   data-reveal
@@ -269,7 +330,12 @@ export function ModulePage({ module, introReady, prefersReducedMotion }) {
                     <div className="font-mono text-[2.1rem] leading-none tracking-[-0.02em] text-[var(--brand-bright)]">
                       {s.n}
                     </div>
-                    <div className="h-9 w-9 rounded-full bg-[rgba(20,71,230,0.08)]" />
+                    <div
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(16,24,40,0.10)] bg-[#f9fafb]"
+                      aria-hidden="true"
+                    >
+                      <Icon size={16} className="text-[var(--brand-bright)]" />
+                    </div>
                   </div>
                   <h4 className="mt-4 font-display text-lg font-semibold tracking-[-0.02em] text-[var(--text)]">
                     {s.title}
@@ -278,7 +344,8 @@ export function ModulePage({ module, introReady, prefersReducedMotion }) {
                     {s.body}
                   </p>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
         </div>
