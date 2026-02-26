@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SmartLink } from "./SmartLink";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -26,46 +25,54 @@ function DiagnosticShuffler({ prefersReducedMotion }) {
   }, [prefersReducedMotion]);
 
   return (
-    <div className="mt-5">
-      <div
-        className={[
-          "rounded-2xl border border-[rgba(16,24,40,0.08)] bg-white p-4 shadow-soft",
-          "transition-transform duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
-        ].join(" ")}
-        style={{
-          transform: `perspective(800px) rotateX(${flip ? 20 : 0}deg)`,
-        }}
-      >
-        <div className="space-y-2">
-          {rows.map((r, i) => (
-            <div
-              key={`${r.label}-${i}`}
-              className="flex items-center justify-between rounded-xl bg-[#f9fafb] px-3 py-2"
-            >
-              <span className="text-xs font-semibold tracking-[-0.01em] text-[var(--text)]">
-                {r.label}
-              </span>
-              <span className="flex items-center gap-2 font-mono text-[11px] text-[var(--muted)]">
-                <span
-                  className={[
-                    "h-2 w-2 rounded-full",
-                    r.tone === "ok"
-                      ? "bg-emerald-500"
-                      : r.tone === "warn"
-                        ? "bg-amber-500"
-                        : "bg-blue-500",
-                  ].join(" ")}
-                />
-                {r.value}
-              </span>
-            </div>
-          ))}
-        </div>
+    <div
+      className={[
+        "h-full rounded-2xl border border-[rgba(16,24,40,0.08)] bg-white p-4 shadow-soft",
+        "flex flex-col",
+        "transition-transform duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
+      ].join(" ")}
+      style={{
+        transform: `perspective(800px) rotateX(${flip ? 20 : 0}deg)`,
+      }}
+    >
+      <div className="flex items-center justify-between font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]">
+        <span className="inline-flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+          GPS LOCK
+        </span>
+        <span>SYNCED</span>
       </div>
 
-      <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
-        Capture the corridor as a dataset, not a memory.
-      </p>
+      <div className="mt-3 space-y-2">
+        {rows.map((r, i) => (
+          <div
+            key={`${r.label}-${i}`}
+            className="flex items-center justify-between rounded-xl bg-[#f9fafb] px-3 py-2"
+          >
+            <span className="text-xs font-semibold tracking-[-0.01em] text-[var(--text)]">
+              {r.label}
+            </span>
+            <span className="flex items-center gap-2 font-mono text-[11px] text-[var(--muted)]">
+              <span
+                className={[
+                  "h-2 w-2 rounded-full",
+                  r.tone === "ok"
+                    ? "bg-emerald-500"
+                    : r.tone === "warn"
+                      ? "bg-amber-500"
+                      : "bg-blue-500",
+                ].join(" ")}
+              />
+              {r.value}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]">
+        <span>NOTES 12</span>
+        <span className="text-[var(--brand-bright)]">READY</span>
+      </div>
     </div>
   );
 }
@@ -73,10 +80,10 @@ function DiagnosticShuffler({ prefersReducedMotion }) {
 function TelemetryTypewriter({ prefersReducedMotion }) {
   const messages = useMemo(
     () => [
-      "Split: ROUTE-102 -> (A–B, B–C, C–D)",
-      "Gap check: 38m -> connector suggested",
-      "Lineage: segment reuse confirmed",
-      "Dispatch: driver view aligned with survey notes",
+      "Split: ROUTE-102\nA–B • B–C • C–D",
+      "Gap check: 38m\nConnector suggested",
+      "Lineage: reuse confirmed\nEdits stay explainable",
+      "Publish: driver pack\nNotes stay attached",
     ],
     []
   );
@@ -113,7 +120,9 @@ function TelemetryTypewriter({ prefersReducedMotion }) {
           if (!alive) return;
           const scrambled = next
             .split("")
-            .map((ch) => (ch === " " ? " " : alphabet[(Math.random() * alphabet.length) | 0]))
+            .map((ch) =>
+              ch === " " || ch === "\n" ? ch : alphabet[(Math.random() * alphabet.length) | 0]
+            )
             .join("");
           setText(scrambled);
           await sleep(40);
@@ -133,7 +142,7 @@ function TelemetryTypewriter({ prefersReducedMotion }) {
   }, [messages, prefersReducedMotion]);
 
   return (
-    <div className="mt-5">
+    <div className="h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 font-mono text-xs text-[var(--muted)]">
           <span className={["h-2 w-2 rounded-full bg-[var(--accent)]", live ? "animate-pulseSoft" : ""].join(" ")} />
@@ -142,18 +151,14 @@ function TelemetryTypewriter({ prefersReducedMotion }) {
         <span className="font-mono text-[11px] text-[var(--muted)]">STREAM</span>
       </div>
 
-      <div className="mt-3 rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#0b1220] p-4 shadow-soft">
-        <div className="font-mono text-sm text-white/90">
+      <div className="mt-3 flex flex-1 items-center rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#0b1220] p-4 shadow-soft">
+        <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/90">
           {text}
           <span className="ml-1 inline-block w-[10px] text-[var(--accent)] animate-cursorBlink">
             |
           </span>
         </div>
       </div>
-
-      <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
-        Compose routes like code: explicit, versioned, explainable.
-      </p>
     </div>
   );
 }
@@ -265,19 +270,19 @@ function SignalGraph({ prefersReducedMotion }) {
   }, [tip]);
 
   return (
-    <div ref={wrapRef} className="mt-5">
+    <div ref={wrapRef} className="h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div className="font-mono text-xs tracking-[0.18em] text-[var(--muted)]">QUERY TURNAROUND</div>
         <div className="font-mono text-[11px] text-[var(--muted)]">seconds</div>
       </div>
 
       <div
-        className="relative mt-3 rounded-2xl border border-[rgba(16,24,40,0.08)] bg-white p-4 shadow-soft"
+        className="relative mt-3 flex flex-1 flex-col rounded-2xl border border-[rgba(16,24,40,0.08)] bg-white p-4 shadow-soft"
         onPointerDown={() => setTip(null)}
       >
         <svg
           viewBox="0 0 100 80"
-          className="h-[160px] w-full"
+          className="h-full w-full"
           role="img"
           aria-label="Query turnaround trend"
         >
@@ -306,7 +311,7 @@ function SignalGraph({ prefersReducedMotion }) {
           </defs>
 
           <rect x="0" y="0" width="100" height="80" rx="6" fill="url(#qportBg)" />
-          <rect x="0" y="0" width="100" height="80" rx="6" fill="url(#qportGrid)" opacity="0.85" />
+          <rect x="0" y="0" width="100" height="80" rx="6" fill="url(#qportGrid)" opacity="0.55" />
 
           <line
             x1="6"
@@ -317,15 +322,6 @@ function SignalGraph({ prefersReducedMotion }) {
             strokeOpacity="0.10"
             strokeWidth="0.6"
             strokeDasharray="2.2 3.2"
-          />
-
-          <path
-            d={d}
-            fill="none"
-            stroke="#101828"
-            strokeOpacity="0.10"
-            strokeWidth="2.4"
-            strokeLinecap="round"
           />
 
           <path ref={fillRef} d={areaD} fill="url(#qportFill)" opacity="0" />
@@ -396,10 +392,6 @@ function SignalGraph({ prefersReducedMotion }) {
           </div>
         )}
       </div>
-
-      <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
-        Ask the system. Get an answer. Stay in flow.
-      </p>
     </div>
   );
 }
@@ -437,174 +429,118 @@ export function Features({ prefersReducedMotion }) {
           <div>
             <p className="font-mono text-xs tracking-[0.22em] text-[var(--muted)]">FEATURES</p>
             <h3 className="mt-3 font-display text-3xl font-semibold tracking-[-0.03em] text-[var(--text)] md:text-4xl">
-              Three instruments. One workflow.
+              Survey. Compose. Dispatch.
             </h3>
           </div>
           <p className="max-w-[520px] text-sm leading-relaxed text-[var(--muted)] md:text-base" data-cursor="text">
-            Built for operators who need the route to be explicit: surveyed, curated, and dispatchable.
+            Capture the corridor in the field, compose it in the dashboard, and dispatch from one source of truth.
           </p>
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           <div
             data-feature-card
-            className="rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-[var(--card)] p-6 shadow-lift"
+            className="flex h-full flex-col rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-[var(--card)] p-6 shadow-lift"
           >
             <div className="flex items-center justify-between">
               <h4 className="font-display text-[1.05rem] font-semibold tracking-[-0.02em] text-[var(--text)]">
                 Survey Capture
               </h4>
               <span className="font-mono text-[11px] tracking-[0.18em] text-[var(--muted)]">
-                DIAGNOSTIC
+                01 DIAGNOSTIC
               </span>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
               GPS tracking plus annotations that stay attached to the road.
             </p>
-            <DiagnosticShuffler prefersReducedMotion={prefersReducedMotion} />
+            <div className="mt-5 flex-1">
+              <DiagnosticShuffler prefersReducedMotion={prefersReducedMotion} />
+            </div>
+            <div className="mt-6 border-t border-[rgba(16,24,40,0.06)] pt-5">
+              <p className="text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Capture the corridor as a dataset, not a memory.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["GPS TRACE", "MEDIA NOTES", "CONSTRAINT FLAGS"].map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div
             data-feature-card
-            className="rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-[var(--card)] p-6 shadow-lift"
+            className="flex h-full flex-col rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-[var(--card)] p-6 shadow-lift"
           >
             <div className="flex items-center justify-between">
               <h4 className="font-display text-[1.05rem] font-semibold tracking-[-0.02em] text-[var(--text)]">
                 Route Composition
               </h4>
               <span className="font-mono text-[11px] tracking-[0.18em] text-[var(--muted)]">
-                TELEMETRY
+                02 TELEMETRY
               </span>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
               Split, merge, and reuse segments without losing lineage.
             </p>
-            <TelemetryTypewriter prefersReducedMotion={prefersReducedMotion} />
+            <div className="mt-5 flex-1">
+              <TelemetryTypewriter prefersReducedMotion={prefersReducedMotion} />
+            </div>
+            <div className="mt-6 border-t border-[rgba(16,24,40,0.06)] pt-5">
+              <p className="text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Compose routes like code: explicit, versioned, explainable.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["SPLIT / MERGE", "LINEAGE", "PUBLISH PACKS"].map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div
             data-feature-card
-            className="rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-[var(--card)] p-6 shadow-lift"
+            className="flex h-full flex-col rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-[var(--card)] p-6 shadow-lift"
           >
             <div className="flex items-center justify-between">
               <h4 className="font-display text-[1.05rem] font-semibold tracking-[-0.02em] text-[var(--text)]">
                 Analytics + QPort AI
               </h4>
               <span className="font-mono text-[11px] tracking-[0.18em] text-[var(--muted)]">
-                SIGNAL
+                03 SIGNAL
               </span>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
               Dashboards for trends. Conversational queries for the next decision.
             </p>
-            <SignalGraph prefersReducedMotion={prefersReducedMotion} />
-          </div>
-        </div>
-
-        {/* App modules map */}
-        <div className="mt-10 rounded-[2rem] border border-[rgba(16,24,40,0.08)] bg-[var(--card)] p-6 shadow-lift">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="font-mono text-xs tracking-[0.22em] text-[var(--muted)]">MODULES</p>
-              <h4 className="mt-3 font-display text-2xl font-semibold tracking-[-0.03em] text-[var(--text)]">
-                Built as a system, not a stack of screens.
-              </h4>
+            <div className="mt-5 flex-1">
+              <SignalGraph prefersReducedMotion={prefersReducedMotion} />
             </div>
-            <p className="max-w-[520px] text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-              These labels match the QPort dashboard sidebar so teams can orient instantly.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <SmartLink
-              href="/routes"
-              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
-            >
-              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
-                Routes
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Curate corridor geometry. Split, merge, validate. Export driver-ready truth.
+            <div className="mt-6 border-t border-[rgba(16,24,40,0.06)] pt-5">
+              <p className="text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
+                Ask the system. Get an answer. Stay in flow.
               </p>
-              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
-                OPEN →
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["METABASE", "EXCEPTIONS", "ASK QPORT AI"].map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]"
+                  >
+                    {t}
+                  </span>
+                ))}
               </div>
-            </SmartLink>
-
-            <SmartLink
-              href="/vehicles"
-              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
-            >
-              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
-                Vehicles
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Encode the fleet you actually run. Keep constraints explicit before dispatch.
-              </p>
-              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
-                OPEN →
-              </div>
-            </SmartLink>
-
-            <SmartLink
-              href="/analytics"
-              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
-            >
-              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
-                Analytics
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Metabase dashboards for route performance, bottlenecks, and operational signals.
-              </p>
-              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
-                OPEN →
-              </div>
-            </SmartLink>
-
-            <SmartLink
-              href="/tasks"
-              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
-            >
-              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
-                Tasks
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Survey, review, and delivery work tracked with ownership, status, and approvals.
-              </p>
-              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
-                OPEN →
-              </div>
-            </SmartLink>
-
-            <SmartLink
-              href="/teams"
-              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
-            >
-              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
-                Teams
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Roles and access that keep field and admin aligned on the same route reality.
-              </p>
-              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
-                OPEN →
-              </div>
-            </SmartLink>
-
-            <SmartLink
-              href="/qport-ai"
-              className="group rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:bg-white hover:shadow-soft"
-            >
-              <div className="font-display text-sm font-semibold tracking-[-0.02em] text-[var(--text)]">
-                Qport.ai
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Ask route questions in plain language. Get the next decision faster.
-              </p>
-              <div className="mt-4 font-mono text-[11px] tracking-[0.18em] text-[var(--brand-bright)] group-hover:text-[var(--accent)] transition-colors">
-                OPEN →
-              </div>
-            </SmartLink>
+            </div>
           </div>
         </div>
       </div>
