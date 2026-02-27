@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { MagneticButton } from "./MagneticButton";
+import { ArrowRight, Check, Loader2, RotateCcw } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function FinalCTA() {
   const sectionRef = useRef(null);
+  const submitRef = useRef(null);
+  const successRef = useRef(null);
   const [form, setForm] = useState({ name: "", company: "", role: "", email: "" });
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
@@ -37,11 +40,49 @@ export function FinalCTA() {
     return () => ctx.revert();
   }, []);
 
+  useEffect(() => {
+    if (status !== "sent") return;
+    const root = successRef.current;
+    if (!root) return;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+
+    const ctx = gsap.context(() => {
+      const items = root.querySelectorAll("[data-success-item]");
+      gsap.fromTo(
+        root,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.7, ease: "power1.out" }
+      );
+      gsap.fromTo(
+        items,
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.55, ease: "power1.out", stagger: 0.08, delay: 0.05 }
+      );
+    }, root);
+
+    return () => ctx.revert();
+  }, [status]);
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const onSubmit = async (e) => {
     e.preventDefault();
     if (status === "sending") return;
+
+    if (submitRef.current) {
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduce) {
+        gsap.to(submitRef.current, {
+          scale: 0.99,
+          duration: 0.12,
+          ease: "power1.out",
+          yoyo: true,
+          repeat: 1,
+        });
+      }
+    }
 
     setStatus("sending");
     setError("");
@@ -132,7 +173,7 @@ export function FinalCTA() {
 
             <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
               {status !== "sent" ? (
-                <form onSubmit={onSubmit} className="space-y-4">
+                <form onSubmit={onSubmit} className="space-y-4" aria-busy={status === "sending"}>
                   {/* Honeypot: humans won't fill this. */}
                   <div className="hidden" aria-hidden="true">
                     <label className="block text-xs font-semibold tracking-[0.18em] uppercase text-white/60">
@@ -202,13 +243,25 @@ export function FinalCTA() {
 
                   <MagneticButton
                     prefersReducedMotion={false}
+                    ref={submitRef}
                     className={[
-                      "mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-3 font-semibold tracking-[-0.01em] text-[#0b1220] shadow-lift transition-colors hover:bg-white/95",
-                      status === "sending" ? "opacity-70" : "",
+                      "mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 font-semibold tracking-[-0.01em] text-[#0b1220] shadow-lift transition-[transform,background-color,opacity] hover:bg-white/95",
+                      status === "sending" ? "cursor-not-allowed opacity-70" : "",
                     ].join(" ")}
                     type="submit"
+                    disabled={status === "sending"}
                   >
-                    {status === "sending" ? "Sending…" : "Request a demo"}
+                    {status === "sending" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        <span className="whitespace-nowrap">Sending</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="whitespace-nowrap">Request a demo</span>
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </>
+                    )}
                   </MagneticButton>
 
                   <p className="text-xs leading-relaxed text-white/55" data-cursor="text">
@@ -226,20 +279,45 @@ export function FinalCTA() {
                   )}
                 </form>
               ) : (
-                <div>
-                  <p className="font-display text-lg font-semibold tracking-[-0.02em] text-white">
-                    Request received.
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-white/65" data-cursor="text">
-                    We’ll reach out{submittedEmail ? ` at ${submittedEmail}` : ""}. Typical response: within 1 business
-                    day.
-                  </p>
-                  <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <a className="text-xs text-white/70 hover:text-white" href="mailto:demo@qportai.com">
-                      Need to add context? demo@qportai.com
+                <div ref={successRef}>
+                  <div className="flex items-start gap-3" data-success-item>
+                    <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.06]">
+                      <Check className="h-4 w-4 text-[var(--brand-bright)]" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="font-display text-lg font-semibold tracking-[-0.02em] text-white">
+                        Request received.
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-white/65" data-cursor="text">
+                        We’ll reach out{submittedEmail ? ` at ${submittedEmail}` : ""}. Typical response: within 1
+                        business day.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className="mt-5 rounded-2xl border border-white/10 bg-[#0b1220]/40 p-4"
+                    data-success-item
+                  >
+                    <div className="text-xs font-semibold tracking-[0.18em] uppercase text-white/55">Next</div>
+                    <div className="mt-2 text-sm text-white/70" data-cursor="text">
+                      If you want to add a corridor link or a recent survey report, send it to:
+                    </div>
+                    <a
+                      className="mt-3 inline-flex items-center gap-2 text-xs font-semibold tracking-[0.06em] text-white/80 hover:text-white"
+                      href="mailto:demo@qportai.com"
+                    >
+                      demo@qportai.com <ArrowRight className="h-4 w-4" aria-hidden="true" />
                     </a>
-                    <button
-                      type="button"
+                  </div>
+
+                  <div
+                    className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                    data-success-item
+                  >
+                    <div className="text-xs font-mono tracking-[0.16em] text-white/45">LOGGED</div>
+                    <MagneticButton
+                      prefersReducedMotion={false}
                       onClick={() => {
                         setSubmittedEmail("");
                         setForm({ name: "", company: "", role: "", email: "" });
@@ -247,11 +325,12 @@ export function FinalCTA() {
                         setError("");
                         setHoneypot("");
                       }}
-                      className="inline-flex w-full items-center justify-center rounded-2xl border border-white/14 bg-white/5 px-6 py-3 font-semibold tracking-[-0.01em] text-white/90 transition-colors hover:bg-white/10 md:w-auto"
-                      data-cursor="button"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.16] bg-white/[0.06] px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] text-white/90 transition-colors hover:bg-white/10 md:w-auto"
+                      aria-label="Start a new demo request"
                     >
-                      New request
-                    </button>
+                      <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                      <span className="whitespace-nowrap">New request</span>
+                    </MagneticButton>
                   </div>
                 </div>
               )}
