@@ -17,6 +17,16 @@ function clip(s, max) {
   return t.slice(0, max);
 }
 
+function safeLog(obj) {
+  // Avoid logging PII. Keep logs high-signal for Vercel debugging.
+  const out = {};
+  for (const k of Object.keys(obj || {})) {
+    if (k === "email" || k === "name" || k === "company") continue;
+    out[k] = obj[k];
+  }
+  return out;
+}
+
 async function readBody(req) {
   if (req.body && typeof req.body === "object") return req.body;
   if (typeof req.body === "string") {
@@ -88,9 +98,10 @@ export default async function handler(req, res) {
   if (!body) return json(res, 400, { ok: false, error: "Invalid JSON body" });
 
   // Honeypot field for simple spam filtering.
-  if (typeof body.website === "string" && body.website.trim()) {
-    return json(res, 200, { ok: true, spam: true });
-  }
+  // Important: browsers can autofill hidden `website` fields. We DO NOT drop the request
+  // (otherwise real leads can be marked spam and never reach you).
+  const honeypot = clip(body.website, 200);
+  const suspicious = Boolean(honeypot);
 
   const name = clip(body.name, 80);
   const company = clip(body.company, 120);
@@ -113,6 +124,7 @@ export default async function handler(req, res) {
     utm_campaign: clip(body.utm_campaign, 120),
     utm_term: clip(body.utm_term, 120),
     utm_content: clip(body.utm_content, 120),
+    user_agent: clip(req.headers["user-agent"] || "", 400),
     ip:
       clip(req.headers["x-forwarded-for"]?.split(",")[0] || "", 80) ||
       clip(req.socket?.remoteAddress || "", 80),
@@ -146,6 +158,7 @@ export default async function handler(req, res) {
     `<hr style="border:none; border-top:1px solid #eee; margin:16px 0;" />` +
     `<div style="color:#666; font-size:12px;">` +
     `<div>Created: ${safe(meta.created_at)}</div>` +
+    (suspicious ? `<div style="color:#b45309;"><b>Suspicious:</b> honeypot filled</div>` : "") +
     (meta.page_url ? `<div>Page: ${safe(meta.page_url)}</div>` : "") +
     (meta.referrer ? `<div>Referrer: ${safe(meta.referrer)}</div>` : "") +
     (meta.utm_source ? `<div>UTM: ${safe(meta.utm_source)} / ${safe(meta.utm_medium)} / ${safe(meta.utm_campaign)}</div>` : "") +
@@ -170,16 +183,65 @@ export default async function handler(req, res) {
     `</div>`;
 
   try {
-    const sentTeam = await sendResendEmail({
-      apiKey,
-      from,
-      to: teamTo,
-      subject: teamSubject,
-      html: teamHtml,
-      replyTo: email,
-    });
+    // Optional: persist leads to a database (recommended) so nothing is ever lost.
+    // Works best with Vercel Postgres; create the table and link storage to the project.
+    const dbUrl =
+      process.env.DATABASE_URL ||
+      process.env.POSTGRES_URL ||
+      process.env.POSTGRES_URL_NON_POOLING ||
+      process.env.POSTGRES_PRISMA_URL;
 
+    let sql = null;
+    if (dbUrl) {
+      try {
+        const mod = await import("@neondatabase/serverless");
+        // Neon serverless: `neon(url)` returns a template-tag query function.
+        sql = mod.neon(dbUrl);
+      } catch {
+        // If the package isn't installed, we just skip persistence.
+        sql = null;
+      }
+    }
+
+    let leadId = null;
+    if (sql) {
+      try {
+        const rows = await sql`
+          INSERT INTO demo_requests
+            (name, company, role, email, page_url, referrer, utm_source, utm_medium, utm_campaign, utm_term, utm_content, ip, user_agent, honeypot, suspicious)
+          VALUES
+            (${name}, ${company}, ${role}, ${email},
+             ${meta.page_url || null}, ${meta.referrer || null},
+             ${meta.utm_source || null}, ${meta.utm_medium || null}, ${meta.utm_campaign || null},
+             ${meta.utm_term || null}, ${meta.utm_content || null},
+             ${meta.ip || null}, ${meta.user_agent || null},
+             ${honeypot || null}, ${suspicious})
+          RETURNING id
+        `;
+        leadId = rows?.[0]?.id ?? null;
+      } catch (e) {
+        console.log("[demo-request] db insert failed", safeLog({ error: e?.message || String(e) }));
+      }
+    }
+
+    let sentTeam = null;
     let sentLead = null;
+    let teamErr = "";
+    let leadErr = "";
+
+    try {
+      sentTeam = await sendResendEmail({
+        apiKey,
+        from,
+        to: teamTo,
+        subject: teamSubject,
+        html: teamHtml,
+        replyTo: email,
+      });
+    } catch (e) {
+      teamErr = e?.message || "Team email failed";
+    }
+
     try {
       sentLead = await sendResendEmail({
         apiKey,
@@ -189,16 +251,51 @@ export default async function handler(req, res) {
         html: leadHtml,
         replyTo: "demo@qportai.com",
       });
-    } catch {
-      // If lead email fails, the team still received the request. Keep response OK.
+    } catch (e) {
+      leadErr = e?.message || "Lead email failed";
+    }
+
+    if (sql && leadId) {
+      try {
+        await sql`
+          UPDATE demo_requests
+          SET
+            resend_team_id = ${sentTeam?.id || null},
+            resend_lead_id = ${sentLead?.id || null},
+            email_team_sent = ${Boolean(sentTeam?.id)},
+            email_lead_sent = ${Boolean(sentLead?.id)},
+            email_team_error = ${teamErr || null},
+            email_lead_error = ${leadErr || null}
+          WHERE id = ${leadId}
+        `;
+      } catch (e) {
+        console.log("[demo-request] db update failed", safeLog({ error: e?.message || String(e) }));
+      }
+    }
+
+    const accepted = Boolean(leadId) || Boolean(sentTeam?.id);
+    console.log(
+      "[demo-request] handled",
+      safeLog({
+        accepted,
+        stored: Boolean(leadId),
+        sent_team: Boolean(sentTeam?.id),
+        sent_lead: Boolean(sentLead?.id),
+        suspicious,
+      })
+    );
+
+    if (!accepted) {
+      return json(res, 502, { ok: false, error: teamErr || leadErr || "Could not process request" });
     }
 
     return json(res, 200, {
       ok: true,
+      stored: Boolean(leadId),
       sent: { team: Boolean(sentTeam?.id), lead: Boolean(sentLead?.id) },
+      suspicious,
     });
   } catch (e) {
     return json(res, 502, { ok: false, error: e?.message || "Email send failed" });
   }
 }
-
