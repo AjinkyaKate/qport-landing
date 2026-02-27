@@ -164,8 +164,8 @@ export function FinalCTA() {
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-3 font-mono text-xs tracking-[0.18em] text-white/55">
-                <a className="text-white/70 hover:text-white" href="mailto:demo@qportai.com">
-                  demo@qportai.com
+                <a className="text-white/70 hover:text-white" href="mailto:info@qportai.com">
+                  info@qportai.com
                 </a>
                 <span className="text-white/25" aria-hidden="true">
                   •
@@ -275,14 +275,14 @@ export function FinalCTA() {
                   </MagneticButton>
 
                   <p className="text-xs leading-relaxed text-white/55" data-cursor="text">
-                    We’ll follow up from <span className="text-white/75">demo@qportai.com</span>.
+                    We’ll follow up from <span className="text-white/75">info@qportai.com</span>.
                   </p>
 
                   {status === "error" && (
                     <p className="text-xs leading-relaxed text-[rgba(255,107,53,0.92)]" data-cursor="text">
                       {error || "Could not send your request."} If it keeps failing, email{" "}
-                      <a className="underline underline-offset-4" href="mailto:demo@qportai.com">
-                        demo@qportai.com
+                      <a className="underline underline-offset-4" href="mailto:info@qportai.com">
+                        info@qportai.com
                       </a>
                       .
                     </p>
@@ -299,49 +299,38 @@ export function FinalCTA() {
                         Request received.
                       </p>
                       <p className="mt-1 text-sm leading-relaxed text-white/65" data-cursor="text">
-                        We’ll reach out{submittedEmail ? ` at ${submittedEmail}` : ""}. Typical response: within 1
-                        business day.
+                        We’ll reach out{submittedEmail ? ` at ${submittedEmail}` : ""} within 1 business day.
                       </p>
                     </div>
                   </div>
 
-                  <div
-                    className="mt-5 rounded-2xl border border-white/10 bg-[#0b1220]/40 p-4"
+                  <p
+                    className="mt-4 text-xs leading-relaxed text-white/55"
+                    data-cursor="text"
                     data-success-item
                   >
-                    <div className="text-xs font-semibold tracking-[0.18em] uppercase text-white/55">Next</div>
-                    <div className="mt-2 text-sm text-white/70" data-cursor="text">
-                      If you want to add a corridor link or a recent survey report, send it to:
-                    </div>
-                    <a
-                      className="mt-3 inline-flex items-center gap-2 text-xs font-semibold tracking-[0.06em] text-white/80 hover:text-white"
-                      href="mailto:demo@qportai.com"
-                    >
-                      demo@qportai.com <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    Need to add context?{" "}
+                    <a className="text-white/70 hover:text-white" href="mailto:info@qportai.com">
+                      info@qportai.com
                     </a>
-                  </div>
+                  </p>
 
-                  <div
-                    className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                  <MagneticButton
+                    prefersReducedMotion={false}
+                    onClick={() => {
+                      setSubmittedEmail("");
+                      setForm({ name: "", company: "", role: "", email: "" });
+                      setStatus("idle");
+                      setError("");
+                      setHoneypot("");
+                    }}
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.16] bg-white/[0.06] px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] text-white/90 transition-colors hover:bg-white/10 md:w-auto"
+                    aria-label="Start a new demo request"
                     data-success-item
                   >
-                    <div className="text-xs font-mono tracking-[0.16em] text-white/45">LOGGED</div>
-                    <MagneticButton
-                      prefersReducedMotion={false}
-                      onClick={() => {
-                        setSubmittedEmail("");
-                        setForm({ name: "", company: "", role: "", email: "" });
-                        setStatus("idle");
-                        setError("");
-                        setHoneypot("");
-                      }}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/[0.16] bg-white/[0.06] px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] text-white/90 transition-colors hover:bg-white/10 md:w-auto"
-                      aria-label="Start a new demo request"
-                    >
-                      <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                      <span className="whitespace-nowrap">New request</span>
-                    </MagneticButton>
-                  </div>
+                    <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                    <span className="whitespace-nowrap">New request</span>
+                  </MagneticButton>
                 </div>
               )}
             </div>

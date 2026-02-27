@@ -88,8 +88,8 @@ export function Footer({ links }) {
             <div className="md:col-span-3">
               <div className="font-mono text-xs tracking-[0.22em] text-white/45">CONTACT</div>
               <div className="mt-4">
-                <a className="text-sm text-white/70 hover:text-white" href="mailto:demo@qportai.com">
-                  demo@qportai.com
+                <a className="text-sm text-white/70 hover:text-white" href="mailto:info@qportai.com">
+                  info@qportai.com
                 </a>
               </div>
 

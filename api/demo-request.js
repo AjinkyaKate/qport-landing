@@ -249,7 +249,7 @@ export default async function handler(req, res) {
         to: email,
         subject: leadSubject,
         html: leadHtml,
-        replyTo: "demo@qportai.com",
+        replyTo: "info@qportai.com",
       });
     } catch (e) {
       leadErr = e?.message || "Lead email failed";
