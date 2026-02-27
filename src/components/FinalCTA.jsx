@@ -87,6 +87,16 @@ export function FinalCTA() {
     setStatus("sending");
     setError("");
 
+    // Local dev note: `vite dev` does not run Vercel Serverless Functions in `api/`.
+    // Set `VITE_DEMO_MOCK=1` in `.env.local` to test the send -> success UX locally.
+    const devMock = import.meta.env.DEV && import.meta.env.VITE_DEMO_MOCK === "1";
+    if (devMock) {
+      await new Promise((r) => window.setTimeout(r, 650));
+      setSubmittedEmail(form.email);
+      setStatus("sent");
+      return;
+    }
+
     const url = new URL(window.location.href);
     const payload = {
       ...form,

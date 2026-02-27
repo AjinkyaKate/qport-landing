@@ -16,6 +16,12 @@ Note: Vercel Serverless Functions in `api/` do not run under `vite dev`. To test
 vercel dev
 ```
 
+If you only need to test the demo form *UI/animations* (send -> success) under `vite dev`, add this to `.env.local`:
+
+```bash
+VITE_DEMO_MOCK=1
+```
+
 ## Demo Request Form
 
 The "Request a demo" form posts to `POST /api/demo-request`.
