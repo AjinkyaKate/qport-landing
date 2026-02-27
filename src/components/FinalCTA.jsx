@@ -8,8 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 export function FinalCTA() {
   const sectionRef = useRef(null);
   const [form, setForm] = useState({ name: "", company: "", role: "", email: "" });
-  const [submitted, setSubmitted] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
   const [error, setError] = useState("");
   const [honeypot, setHoneypot] = useState("");
@@ -74,31 +73,11 @@ export function FinalCTA() {
         throw new Error(data?.error || "Could not send your request. Try again in a moment.");
       }
 
-      setSubmitted(payload);
+      setSubmittedEmail(form.email);
       setStatus("sent");
     } catch (err) {
-      setSubmitted(payload); // still show the request so it can be copied manually
       setStatus("error");
       setError(err?.message || "Could not send your request.");
-    }
-  };
-
-  const copy = async () => {
-    if (!submitted) return;
-    const text =
-      `QPort Demo Request\n\n` +
-      `Name: ${submitted.name}\n` +
-      `Company: ${submitted.company}\n` +
-      `Role: ${submitted.role}\n` +
-      `Email: ${submitted.email}\n\n` +
-      `Created: ${submitted.created_at}\n`;
-
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1200);
-    } catch {
-      // Ignore clipboard failures; the content is still visible to copy manually.
     }
   };
 
@@ -152,7 +131,7 @@ export function FinalCTA() {
             </div>
 
             <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-              {!submitted ? (
+              {status !== "sent" ? (
                 <form onSubmit={onSubmit} className="space-y-4">
                   {/* Honeypot: humans won't fill this. */}
                   <div className="hidden" aria-hidden="true">
@@ -233,48 +212,36 @@ export function FinalCTA() {
                   </MagneticButton>
 
                   <p className="text-xs leading-relaxed text-white/55" data-cursor="text">
-                    You’ll receive a confirmation email. Our team will follow up.
+                    We’ll follow up from <span className="text-white/75">demo@qportai.com</span>.
                   </p>
 
                   {status === "error" && (
                     <p className="text-xs leading-relaxed text-[rgba(255,107,53,0.92)]" data-cursor="text">
-                      {error || "Could not send your request."} You can still copy the details after submit.
+                      {error || "Could not send your request."} If it keeps failing, email{" "}
+                      <a className="underline underline-offset-4" href="mailto:demo@qportai.com">
+                        demo@qportai.com
+                      </a>
+                      .
                     </p>
                   )}
                 </form>
               ) : (
                 <div>
                   <p className="font-display text-lg font-semibold tracking-[-0.02em] text-white">
-                    {status === "sent" ? "Request sent." : "Request ready to copy."}
+                    Request received.
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-white/65" data-cursor="text">
-                    {status === "sent"
-                      ? "A confirmation email is on the way. We’ll reach out soon."
-                      : "We couldn't send automatically. Copy this into email, and we’ll respond."}
+                    We’ll reach out{submittedEmail ? ` at ${submittedEmail}` : ""}. Typical response: within 1 business
+                    day.
                   </p>
-
-                  <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b1220] p-4">
-                    <div className="space-y-1 font-mono text-xs text-white/80">
-                      <div>Name: {submitted.name}</div>
-                      <div>Company: {submitted.company}</div>
-                      <div>Role: {submitted.role}</div>
-                      <div>Email: {submitted.email}</div>
-                      <div className="pt-2 text-white/45">Created: {submitted.created_at}</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex flex-col gap-3 md:flex-row">
-                    <MagneticButton
-                      prefersReducedMotion={false}
-                      onClick={copy}
-                      className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-3 font-semibold tracking-[-0.01em] text-[#0b1220] shadow-lift transition-colors hover:bg-white/95 md:w-auto"
-                    >
-                      {copied ? "Copied" : "Copy details"}
-                    </MagneticButton>
+                  <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <a className="text-xs text-white/70 hover:text-white" href="mailto:demo@qportai.com">
+                      Need to add context? demo@qportai.com
+                    </a>
                     <button
                       type="button"
                       onClick={() => {
-                        setSubmitted(null);
+                        setSubmittedEmail("");
                         setForm({ name: "", company: "", role: "", email: "" });
                         setStatus("idle");
                         setError("");
@@ -286,10 +253,6 @@ export function FinalCTA() {
                       New request
                     </button>
                   </div>
-
-                  <p className="mt-4 text-xs leading-relaxed text-white/55" data-cursor="text">
-                    Next: bring one corridor and one recent survey report. We’ll map the workflow to your standards.
-                  </p>
                 </div>
               )}
             </div>
