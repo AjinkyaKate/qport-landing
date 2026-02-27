@@ -27,8 +27,8 @@ function DiagnosticShuffler({ prefersReducedMotion }) {
   return (
     <div
       className={[
-        "h-full rounded-2xl border border-[rgba(16,24,40,0.08)] bg-white p-4 shadow-soft",
-        "flex flex-col",
+        "h-full rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] p-4",
+        "flex flex-col justify-between",
         "transition-transform duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
       ].join(" ")}
       style={{
@@ -43,11 +43,11 @@ function DiagnosticShuffler({ prefersReducedMotion }) {
         <span>SYNCED</span>
       </div>
 
-      <div className="mt-3 space-y-2">
+      <div className="mt-4 flex flex-1 flex-col justify-center gap-2">
         {rows.map((r, i) => (
           <div
             key={`${r.label}-${i}`}
-            className="flex items-center justify-between rounded-xl bg-[#f9fafb] px-3 py-2"
+            className="flex items-center justify-between rounded-xl border border-[rgba(16,24,40,0.06)] bg-white px-3 py-2"
           >
             <span className="text-xs font-semibold tracking-[-0.01em] text-[var(--text)]">
               {r.label}
@@ -69,7 +69,7 @@ function DiagnosticShuffler({ prefersReducedMotion }) {
         ))}
       </div>
 
-      <div className="mt-3 flex items-center justify-between font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]">
+      <div className="mt-4 flex items-center justify-between font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]">
         <span>NOTES 12</span>
         <span className="text-[var(--brand-bright)]">READY</span>
       </div>
@@ -142,16 +142,21 @@ function TelemetryTypewriter({ prefersReducedMotion }) {
   }, [messages, prefersReducedMotion]);
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 font-mono text-xs text-[var(--muted)]">
-          <span className={["h-2 w-2 rounded-full bg-[var(--accent)]", live ? "animate-pulseSoft" : ""].join(" ")} />
+    <div className="h-full flex flex-col overflow-hidden rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#0b1220]">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+        <div className="flex items-center gap-2 font-mono text-xs text-white/65">
+          <span
+            className={[
+              "h-2 w-2 rounded-full bg-[var(--accent)]",
+              live ? "animate-pulseSoft" : "",
+            ].join(" ")}
+          />
           <span className="tracking-[0.22em]">LIVE</span>
         </div>
-        <span className="font-mono text-[11px] text-[var(--muted)]">STREAM</span>
+        <span className="font-mono text-[11px] tracking-[0.18em] text-white/55">STREAM</span>
       </div>
 
-      <div className="mt-3 flex flex-1 items-center rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#0b1220] p-4 shadow-soft">
+      <div className="flex flex-1 items-center px-4 py-4">
         <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/90">
           {text}
           <span className="ml-1 inline-block w-[10px] text-[var(--accent)] animate-cursorBlink">
@@ -270,16 +275,17 @@ function SignalGraph({ prefersReducedMotion }) {
   }, [tip]);
 
   return (
-    <div ref={wrapRef} className="h-full flex flex-col">
-      <div className="flex items-center justify-between">
+    <div
+      ref={wrapRef}
+      className="h-full flex flex-col overflow-hidden rounded-2xl border border-[rgba(16,24,40,0.08)] bg-[#f9fafb]"
+      onPointerDown={() => setTip(null)}
+    >
+      <div className="flex items-center justify-between border-b border-[rgba(16,24,40,0.08)] px-4 py-3">
         <div className="font-mono text-xs tracking-[0.18em] text-[var(--muted)]">QUERY TURNAROUND</div>
-        <div className="font-mono text-[11px] text-[var(--muted)]">seconds</div>
+        <div className="font-mono text-[11px] tracking-[0.18em] text-[var(--muted)]">SECONDS</div>
       </div>
 
-      <div
-        className="relative mt-3 flex flex-1 flex-col rounded-2xl border border-[rgba(16,24,40,0.08)] bg-white p-4 shadow-soft"
-        onPointerDown={() => setTip(null)}
-      >
+      <div className="relative flex flex-1 p-4">
         <svg
           viewBox="0 0 100 80"
           className="h-full w-full"
@@ -287,31 +293,30 @@ function SignalGraph({ prefersReducedMotion }) {
           aria-label="Query turnaround trend"
         >
           <defs>
-            <linearGradient id="qportBg" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#1447e6" stopOpacity="0.06" />
-              <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
-              <stop offset="100%" stopColor="#ff6b35" stopOpacity="0.05" />
-            </linearGradient>
-
             <pattern id="qportGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 H 0 V 10" fill="none" stroke="#101828" strokeOpacity="0.08" strokeWidth="0.35" />
+              <path
+                d="M 10 0 H 0 V 10"
+                fill="none"
+                stroke="#101828"
+                strokeOpacity="0.06"
+                strokeWidth="0.35"
+              />
             </pattern>
 
-            <linearGradient id="qportLine" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#1447e6" />
-              <stop offset="65%" stopColor="#1447e6" />
-              <stop offset="100%" stopColor="#ff6b35" />
+            <linearGradient id="qportLine" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1447e6" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#003983" stopOpacity="0.95" />
             </linearGradient>
 
-            <linearGradient id="qportFill" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#1447e6" stopOpacity="0.10" />
-              <stop offset="65%" stopColor="#1447e6" stopOpacity="0.06" />
-              <stop offset="100%" stopColor="#ff6b35" stopOpacity="0.06" />
+            <linearGradient id="qportFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1447e6" stopOpacity="0.14" />
+              <stop offset="70%" stopColor="#1447e6" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#1447e6" stopOpacity="0" />
             </linearGradient>
           </defs>
 
-          <rect x="0" y="0" width="100" height="80" rx="6" fill="url(#qportBg)" />
-          <rect x="0" y="0" width="100" height="80" rx="6" fill="url(#qportGrid)" opacity="0.55" />
+          <rect x="0" y="0" width="100" height="80" rx="6" fill="#ffffff" />
+          <rect x="0" y="0" width="100" height="80" rx="6" fill="url(#qportGrid)" opacity="0.65" />
 
           <line
             x1="6"
@@ -319,7 +324,7 @@ function SignalGraph({ prefersReducedMotion }) {
             x2="94"
             y2="78"
             stroke="#101828"
-            strokeOpacity="0.10"
+            strokeOpacity="0.08"
             strokeWidth="0.6"
             strokeDasharray="2.2 3.2"
           />
@@ -358,7 +363,7 @@ function SignalGraph({ prefersReducedMotion }) {
                   r={active ? "5.6" : "5.0"}
                   fill="none"
                   stroke={active ? "#ff6b35" : "#1447e6"}
-                  strokeOpacity={active ? "0.28" : "0.12"}
+                  strokeOpacity={active ? "0.26" : "0.10"}
                   strokeWidth="0.9"
                   data-signal-end={isEnd ? "1" : undefined}
                 />
@@ -429,11 +434,11 @@ export function Features({ prefersReducedMotion }) {
           <div>
             <p className="font-mono text-xs tracking-[0.22em] text-[var(--muted)]">FEATURES</p>
             <h3 className="mt-3 font-display text-3xl font-semibold tracking-[-0.03em] text-[var(--text)] md:text-4xl">
-              Survey. Compose. Dispatch.
+              Three instruments. One workflow.
             </h3>
           </div>
           <p className="max-w-[520px] text-sm leading-relaxed text-[var(--muted)] md:text-base" data-cursor="text">
-            Capture the corridor in the field, compose it in the dashboard, and dispatch from one source of truth.
+            Built for operators who need the route to be explicit: surveyed, curated, dispatchable.
           </p>
         </div>
 
@@ -447,21 +452,21 @@ export function Features({ prefersReducedMotion }) {
                 Survey Capture
               </h4>
               <span className="font-mono text-[11px] tracking-[0.18em] text-[var(--muted)]">
-                01 DIAGNOSTIC
+                01 CAPTURE
               </span>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-              GPS tracking plus annotations that stay attached to the road.
+              GPS route recording with evidence pinned to the road.
             </p>
             <div className="mt-5 flex-1">
               <DiagnosticShuffler prefersReducedMotion={prefersReducedMotion} />
             </div>
             <div className="mt-6 border-t border-[rgba(16,24,40,0.06)] pt-5">
               <p className="text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Capture the corridor as a dataset, not a memory.
+                Every constraint keeps its context. No re-survey guesswork.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {["GPS TRACE", "MEDIA NOTES", "CONSTRAINT FLAGS"].map((t) => (
+                {["GPS TRACE", "PHOTO/VIDEO/VOICE", "CLEARANCE FLAGS"].map((t) => (
                   <span
                     key={t}
                     className="rounded-full border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]"
@@ -482,21 +487,21 @@ export function Features({ prefersReducedMotion }) {
                 Route Composition
               </h4>
               <span className="font-mono text-[11px] tracking-[0.18em] text-[var(--muted)]">
-                02 TELEMETRY
+                02 CURATE
               </span>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-              Split, merge, and reuse segments without losing lineage.
+              Split, merge, and reuse surveyed segments without losing lineage.
             </p>
             <div className="mt-5 flex-1">
               <TelemetryTypewriter prefersReducedMotion={prefersReducedMotion} />
             </div>
             <div className="mt-6 border-t border-[rgba(16,24,40,0.06)] pt-5">
               <p className="text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Compose routes like code: explicit, versioned, explainable.
+                Compose corridors like code: explicit, versioned, explainable.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {["SPLIT / MERGE", "LINEAGE", "PUBLISH PACKS"].map((t) => (
+                {["SPLIT / MERGE", "LINEAGE", "PUBLISH PACK"].map((t) => (
                   <span
                     key={t}
                     className="rounded-full border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]"
@@ -517,21 +522,21 @@ export function Features({ prefersReducedMotion }) {
                 Analytics + QPort AI
               </h4>
               <span className="font-mono text-[11px] tracking-[0.18em] text-[var(--muted)]">
-                03 SIGNAL
+                03 DECIDE
               </span>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]" data-cursor="text">
-              Dashboards for trends. Conversational queries for the next decision.
+              Dashboards for exceptions. Ask QPort AI in plain language.
             </p>
             <div className="mt-5 flex-1">
               <SignalGraph prefersReducedMotion={prefersReducedMotion} />
             </div>
             <div className="mt-6 border-t border-[rgba(16,24,40,0.06)] pt-5">
               <p className="text-xs leading-relaxed text-[var(--muted)]" data-cursor="text">
-                Ask the system. Get an answer. Stay in flow.
+                Faster answers. Cleaner dispatch decisions. Less back-and-forth.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {["METABASE", "EXCEPTIONS", "ASK QPORT AI"].map((t) => (
+                {["METABASE", "ASK QPORT AI", "EXCEPTION SIGNALS"].map((t) => (
                   <span
                     key={t}
                     className="rounded-full border border-[rgba(16,24,40,0.08)] bg-[#f9fafb] px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]"

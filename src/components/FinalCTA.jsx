@@ -15,6 +15,10 @@ export function FinalCTA() {
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
   const [error, setError] = useState("");
   const [honeypot, setHoneypot] = useState("");
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -252,7 +256,7 @@ export function FinalCTA() {
                   </div>
 
                   <MagneticButton
-                    prefersReducedMotion={false}
+                    prefersReducedMotion={reduceMotion}
                     ref={submitRef}
                     className={[
                       "mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 font-semibold tracking-[-0.01em] text-[#0b1220] shadow-lift transition-[transform,background-color,opacity] hover:bg-white/95",
@@ -316,7 +320,7 @@ export function FinalCTA() {
                   </p>
 
                   <MagneticButton
-                    prefersReducedMotion={false}
+                    prefersReducedMotion={reduceMotion}
                     onClick={() => {
                       setSubmittedEmail("");
                       setForm({ name: "", company: "", role: "", email: "" });
