@@ -13,6 +13,9 @@ import {
   Sparkles,
   Truck,
   Users,
+  Layers,
+  Minus,
+  Plus,
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -61,15 +64,25 @@ function RouteMap({
   embedded = false,
   heightClass = "h-[420px] md:h-[560px]",
   roundedClass = "rounded-xl",
+  mode = "auto", // "auto" | "mapbox" | "static"
+  staticSrc = "/map-india-terrain.webp",
+  preferStaticInAuto = false,
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const [failed, setFailed] = useState(false);
   const [fallbackImageReady, setFallbackImageReady] = useState(false);
+  const [fallbackImageChecked, setFallbackImageChecked] = useState(false);
+  const [staticZoom, setStaticZoom] = useState(1);
 
   const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
-  const fallbackImageSrc = "/map-india-terrain.webp";
+  const fallbackImageSrc = staticSrc;
+  const forceStatic = mode === "static";
+  const forceMapbox = mode === "mapbox";
+  const wantsStaticInAuto = mode === "auto" && preferStaticInAuto;
+  const waitingForStaticCheck = wantsStaticInAuto && !fallbackImageChecked;
+  const canUseStaticInAuto = wantsStaticInAuto && fallbackImageChecked && fallbackImageReady;
 
   const route = useMemo(
     () => [
@@ -93,20 +106,34 @@ function RouteMap({
 
   useEffect(() => {
     // Optional static fallback image for marketing (user-provided asset in /public).
-    // We only use it when Mapbox isn't available (missing token or load failure).
+    // If enabled, this can also be preferred over Mapbox for a controlled "marketing basemap".
     let alive = true;
+    setFallbackImageChecked(false);
     const img = new Image();
-    img.onload = () => alive && setFallbackImageReady(true);
-    img.onerror = () => alive && setFallbackImageReady(false);
+    img.onload = () => {
+      if (!alive) return;
+      setFallbackImageReady(true);
+      setFallbackImageChecked(true);
+    };
+    img.onerror = () => {
+      if (!alive) return;
+      setFallbackImageReady(false);
+      setFallbackImageChecked(true);
+    };
     img.src = fallbackImageSrc;
     return () => {
       alive = false;
     };
-  }, []);
+  }, [fallbackImageSrc]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    if (forceStatic) return;
+    // If we prefer static basemaps in "auto" mode, wait until the image check finishes.
+    if (wantsStaticInAuto && !fallbackImageChecked) return;
+    // If the static basemap is available, do not boot Mapbox.
+    if (wantsStaticInAuto && fallbackImageReady) return;
     if (!token) return;
     if (failed) return;
 
@@ -220,10 +247,71 @@ function RouteMap({
         mapRef.current = null;
       }
     };
-  }, [token, prefersReducedMotion, failed, route, notePoint]);
+  }, [
+    token,
+    prefersReducedMotion,
+    failed,
+    route,
+    notePoint,
+    forceStatic,
+    wantsStaticInAuto,
+    fallbackImageChecked,
+    fallbackImageReady,
+  ]);
 
-  if (!token || failed) {
+  if (waitingForStaticCheck) {
+    return (
+      <div
+        className={[
+          embedded ? "" : "bg-white",
+          heightClass,
+          roundedClass,
+          "relative w-full overflow-hidden border border-[rgba(16,24,40,0.08)] bg-[#f9fafb]",
+        ].join(" ")}
+        role="img"
+        aria-label="Loading map preview"
+      >
+        <svg viewBox="0 0 100 70" className="absolute inset-0 h-full w-full" aria-hidden="true">
+          <defs>
+            <pattern id="gridWB-loading" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path
+                d="M 10 0 H 0 V 10"
+                fill="none"
+                stroke="#101828"
+                strokeOpacity="0.06"
+                strokeWidth="0.4"
+              />
+            </pattern>
+          </defs>
+          <rect x="0" y="0" width="100" height="70" rx="8" fill="#ffffff" />
+          <rect
+            x="0"
+            y="0"
+            width="100"
+            height="70"
+            rx="8"
+            fill="url(#gridWB-loading)"
+            opacity="0.95"
+          />
+        </svg>
+        <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-[rgba(16,24,40,0.10)] bg-white/80 px-3 py-1.5 font-mono text-[10px] tracking-[0.18em] text-[#4a5565] shadow-soft">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#101828]/35" aria-hidden="true" />
+          LOADING BASEMAP
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-white/35 via-transparent to-transparent" />
+      </div>
+    );
+  }
+
+  if (forceStatic || canUseStaticInAuto || (!token || failed) || (forceMapbox && !token)) {
     if (fallbackImageReady) {
+      const minZoom = 1;
+      const maxZoom = 1.55;
+      const canZoomIn = staticZoom < maxZoom - 0.001;
+      const canZoomOut = staticZoom > minZoom + 0.001;
+      const setZoom = (next) =>
+        setStaticZoom(Math.max(minZoom, Math.min(maxZoom, Math.round(next * 100) / 100)));
+
       return (
         <div
           className={[
@@ -235,36 +323,108 @@ function RouteMap({
           role="img"
           aria-label="India terrain map preview"
         >
-          <img
-            src={fallbackImageSrc}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: `scale(${staticZoom})`,
+              transformOrigin: "50% 50%",
+              transition: prefersReducedMotion ? "none" : "transform 240ms ease-out",
+            }}
+          >
+            <img
+              src={fallbackImageSrc}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
 
-          {/* Overlay route line + pins so the "QPort corridor" stays readable. */}
-          <svg viewBox="0 0 100 70" className="absolute inset-0 h-full w-full" aria-hidden="true">
-            <path
-              d="M 10 58 C 20 52, 24 44, 34 46 S 52 60, 60 48 S 78 28, 90 18"
-              fill="none"
-              stroke="rgba(20,71,230,0.18)"
-              strokeWidth="10"
-              strokeLinecap="round"
-            />
-            <path
-              d="M 10 58 C 20 52, 24 44, 34 46 S 52 60, 60 48 S 78 28, 90 18"
-              fill="none"
-              stroke="#1447e6"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <circle cx="10" cy="58" r="3.2" fill="#ef4444" stroke="#fff" strokeWidth="1.5" />
-            <circle cx="90" cy="18" r="3.2" fill="#22c55e" stroke="#fff" strokeWidth="1.5" />
-            <circle cx="44" cy="50" r="2.8" fill="#f59e0b" stroke="#fff" strokeWidth="1.3" />
-          </svg>
+            {/* Overlay route line + pins so the "QPort corridor" stays readable. */}
+            <svg viewBox="0 0 100 70" className="absolute inset-0 h-full w-full" aria-hidden="true">
+              <path
+                d="M 10 58 C 20 52, 24 44, 34 46 S 52 60, 60 48 S 78 28, 90 18"
+                fill="none"
+                stroke="rgba(20,71,230,0.18)"
+                strokeWidth="10"
+                strokeLinecap="round"
+              />
+              <path
+                d="M 10 58 C 20 52, 24 44, 34 46 S 52 60, 60 48 S 78 28, 90 18"
+                fill="none"
+                stroke="#1447e6"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+
+              {/* Constraint markers */}
+              {[
+                [34, 46],
+                [60, 48],
+                [78, 28],
+              ].map(([x, y], idx) => (
+                <g key={idx}>
+                  <circle cx={x} cy={y} r="4.9" fill="rgba(255,107,53,0.14)" />
+                  <circle cx={x} cy={y} r="2.3" fill="#ff6b35" opacity="0.92" />
+                </g>
+              ))}
+
+              {/* Vehicle live dots */}
+              <g>
+                <circle cx="54" cy="56" r="6.2" fill="rgba(20,71,230,0.10)" />
+                <circle cx="54" cy="56" r="2.7" fill="#101828" stroke="#fff" strokeWidth="1.3" />
+              </g>
+
+              {/* Start / End / Note */}
+              <circle cx="10" cy="58" r="3.2" fill="#ef4444" stroke="#fff" strokeWidth="1.5" />
+              <circle cx="90" cy="18" r="3.2" fill="#22c55e" stroke="#fff" strokeWidth="1.5" />
+              <circle cx="44" cy="50" r="2.8" fill="#f59e0b" stroke="#fff" strokeWidth="1.3" />
+            </svg>
+          </div>
 
           <div className="absolute inset-0 bg-gradient-to-t from-white/35 via-transparent to-transparent" />
+
+          {/* Minimal map controls (purposeful, not noisy) */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="pointer-events-auto absolute right-3 top-3 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setZoom(staticZoom + 0.12)}
+                disabled={!canZoomIn}
+                className={[
+                  "inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(16,24,40,0.12)] bg-white/90 shadow-soft transition-opacity",
+                  canZoomIn ? "opacity-100" : "opacity-50",
+                ].join(" ")}
+                aria-label="Zoom in"
+              >
+                <Plus size={18} className="text-[#101828]" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoom(staticZoom - 0.12)}
+                disabled={!canZoomOut}
+                className={[
+                  "inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(16,24,40,0.12)] bg-white/90 shadow-soft transition-opacity",
+                  canZoomOut ? "opacity-100" : "opacity-50",
+                ].join(" ")}
+                aria-label="Zoom out"
+              >
+                <Minus size={18} className="text-[#101828]" aria-hidden="true" />
+              </button>
+              <div className="h-px w-full bg-[rgba(16,24,40,0.10)]" aria-hidden="true" />
+              <button
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(16,24,40,0.12)] bg-white/90 shadow-soft"
+                aria-label="Layers"
+              >
+                <Layers size={18} className="text-[#101828]" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-[rgba(16,24,40,0.10)] bg-white/80 px-3 py-1.5 font-mono text-[10px] tracking-[0.18em] text-[#4a5565] shadow-soft">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#101828]/35" aria-hidden="true" />
+              RAIL VIEW
+            </div>
+          </div>
         </div>
       );
     }
@@ -533,6 +693,7 @@ function DesktopFrame({ prefersReducedMotion, className = "" }) {
               <RouteMap
                 embedded
                 prefersReducedMotion={prefersReducedMotion}
+                preferStaticInAuto
                 heightClass="h-[420px] md:h-[700px]"
                 roundedClass="rounded-2xl"
               />
