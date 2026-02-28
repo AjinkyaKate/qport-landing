@@ -705,7 +705,7 @@ export function ProductScreens({ prefersReducedMotion = false }) {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-12 lg:items-stretch">
+        <div className="mt-10 grid gap-6 lg:grid-cols-12 lg:items-start">
           <div className="lg:col-span-7" data-screens-reveal>
             <DesktopFrame
               active={tab}
@@ -713,25 +713,20 @@ export function ProductScreens({ prefersReducedMotion = false }) {
               routePathRef={routePathRef}
               vehiclePathRef={vehiclePathRef}
               prefersReducedMotion={prefersReducedMotion}
-              className="lg:h-[620px]"
             />
           </div>
 
           <div className="lg:col-span-5" data-screens-reveal>
-            {/* Mobile device stack: overlap on desktop to avoid awkward whitespace. */}
-            <div className="grid gap-6 lg:relative lg:h-[620px] lg:overflow-visible">
-              <div className="lg:absolute lg:left-0 lg:top-0 lg:w-[92%] lg:max-w-[380px] lg:origin-top-left lg:scale-[0.94]">
-                <MobileSurveyPreview
-                  pathRef={mobileSurveyPathRef}
-                  prefersReducedMotion={prefersReducedMotion}
-                />
-              </div>
-              <div className="lg:absolute lg:bottom-0 lg:right-0 lg:w-[92%] lg:max-w-[380px] lg:origin-bottom-right lg:scale-[0.94]">
-                <MobileDriverPreview
-                  pathRef={mobileNavPathRef}
-                  prefersReducedMotion={prefersReducedMotion}
-                />
-              </div>
+            {/* Keep both screens fully visible. Mid screens can show them side-by-side; desktop stacks. */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+              <MobileSurveyPreview
+                pathRef={mobileSurveyPathRef}
+                prefersReducedMotion={prefersReducedMotion}
+              />
+              <MobileDriverPreview
+                pathRef={mobileNavPathRef}
+                prefersReducedMotion={prefersReducedMotion}
+              />
             </div>
           </div>
         </div>
