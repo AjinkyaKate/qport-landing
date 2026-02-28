@@ -705,8 +705,9 @@ export function ProductScreens({ prefersReducedMotion = false }) {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-12 lg:items-start">
-          <div className="lg:col-span-7" data-screens-reveal>
+        <div className="mt-10 grid gap-6">
+          {/* 1) Web app (full width) */}
+          <div data-screens-reveal>
             <DesktopFrame
               active={tab}
               onChange={(next) => setTab(next === "vehicles" ? "vehicles" : "routes")}
@@ -716,18 +717,16 @@ export function ProductScreens({ prefersReducedMotion = false }) {
             />
           </div>
 
-          <div className="lg:col-span-5" data-screens-reveal>
-            {/* Keep both screens fully visible. Mid screens can show them side-by-side; desktop stacks. */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
-              <MobileSurveyPreview
-                pathRef={mobileSurveyPathRef}
-                prefersReducedMotion={prefersReducedMotion}
-              />
-              <MobileDriverPreview
-                pathRef={mobileNavPathRef}
-                prefersReducedMotion={prefersReducedMotion}
-              />
-            </div>
+          {/* 2) Mobile apps (below) */}
+          <div className="grid gap-6 md:grid-cols-2" data-screens-reveal>
+            <MobileSurveyPreview
+              pathRef={mobileSurveyPathRef}
+              prefersReducedMotion={prefersReducedMotion}
+            />
+            <MobileDriverPreview
+              pathRef={mobileNavPathRef}
+              prefersReducedMotion={prefersReducedMotion}
+            />
           </div>
         </div>
 
