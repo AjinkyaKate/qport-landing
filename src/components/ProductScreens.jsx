@@ -346,9 +346,18 @@ function DesktopFrame({ prefersReducedMotion, className = "" }) {
 
   const route = useMemo(
     () => ({
+      program: "Wind Corridor Program",
+      capacity: "320 MW",
       name: "Mission Impossible",
       status: "completed",
       note: "test note from web app",
+      progress: 68,
+      kpis: [
+        ["Components moved", "142 / 210"],
+        ["Routes published", "23"],
+        ["Tasks open", "7"],
+        ["Vehicles live", "12"],
+      ],
       meta: [
         ["Route", "Mission Impossible"],
         ["Survey", "1 pass"],
@@ -466,8 +475,13 @@ function DesktopFrame({ prefersReducedMotion, className = "" }) {
           {/* Top route bar */}
           <div className="flex flex-col gap-3 border-b border-[rgba(16,24,40,0.10)] bg-white px-4 py-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
-              <div className="text-base font-semibold tracking-[-0.02em] text-[#101828]">
-                {route.name}
+              <div>
+                <div className="font-mono text-[10px] tracking-[0.22em] text-[#667085]">
+                  {route.program} · {route.capacity}
+                </div>
+                <div className="mt-1 text-base font-semibold tracking-[-0.02em] text-[#101828]">
+                  {route.name}
+                </div>
               </div>
               <span className="rounded-full bg-[#FEF0C7] px-3 py-1 text-xs font-semibold tracking-tight text-[#B54708]">
                 {route.status}
@@ -608,6 +622,67 @@ function DesktopFrame({ prefersReducedMotion, className = "" }) {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Progress stays visible in both tabs: command-center context without noise. */}
+              <div className="mt-4 rounded-2xl border border-[rgba(16,24,40,0.10)] bg-white px-4 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="font-mono text-[10px] tracking-[0.22em] text-[#667085]">PROGRESS</div>
+                  <div className="text-xs font-semibold tracking-tight text-[#101828]">
+                    {route.progress}%
+                  </div>
+                </div>
+
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#f2f4f7]">
+                  <div
+                    className="h-full rounded-full bg-[var(--brand-bright)]"
+                    style={{ width: `${route.progress}%` }}
+                  />
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {route.kpis.map(([k, v]) => (
+                    <div key={k} className="rounded-xl border border-[rgba(16,24,40,0.08)] bg-[#fbfbfc] px-3 py-2">
+                      <div className="text-[11px] text-[#667085]" data-cursor="text">
+                        {k}
+                      </div>
+                      <div className="mt-1 text-xs font-semibold tracking-tight text-[#101828]">
+                        {v}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-mono text-[10px] tracking-[0.22em] text-[#667085]">
+                      SIGNAL
+                    </div>
+                    <div className="font-mono text-[10px] tracking-[0.22em] text-[#667085]">
+                      LAST 14 DAYS
+                    </div>
+                  </div>
+                  <div className="mt-2 overflow-hidden rounded-xl border border-[rgba(16,24,40,0.08)] bg-[#fbfbfc] px-3 py-3">
+                    <svg viewBox="0 0 100 28" className="h-10 w-full" role="img" aria-label="Progress signal">
+                      <path
+                        d="M 2 22 C 12 20, 20 18, 28 19 S 44 22, 52 17 S 66 8, 78 9 S 92 8, 98 6"
+                        fill="none"
+                        stroke="rgba(20,71,230,0.18)"
+                        strokeWidth="6"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M 2 22 C 12 20, 20 18, 28 19 S 44 22, 52 17 S 66 8, 78 9 S 92 8, 98 6"
+                        fill="none"
+                        stroke="#1447e6"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                      />
+                      <circle cx="52" cy="17" r="3.2" fill="#ff6b35" opacity="0.95" />
+                      <circle cx="98" cy="6" r="3.2" fill="#22c55e" opacity="0.95" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
