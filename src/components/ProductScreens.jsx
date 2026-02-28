@@ -66,8 +66,10 @@ function RouteMap({
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const [failed, setFailed] = useState(false);
+  const [fallbackImageReady, setFallbackImageReady] = useState(false);
 
   const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
+  const fallbackImageSrc = "/map-india-terrain.webp";
 
   const route = useMemo(
     () => [
@@ -90,6 +92,19 @@ function RouteMap({
   const notePoint = useMemo(() => route[5], [route]);
 
   useEffect(() => {
+    // Optional static fallback image for marketing (user-provided asset in /public).
+    // We only use it when Mapbox isn't available (missing token or load failure).
+    let alive = true;
+    const img = new Image();
+    img.onload = () => alive && setFallbackImageReady(true);
+    img.onerror = () => alive && setFallbackImageReady(false);
+    img.src = fallbackImageSrc;
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     if (!token) return;
@@ -106,8 +121,8 @@ function RouteMap({
 
         const map = new mapboxgl.Map({
           container: el,
-          // Close to the real app feel: light basemap, low contrast.
-          style: "mapbox://styles/mapbox/light-v11",
+          // Terrain-style basemap. If you prefer the exact app look, switch to "light-v11".
+          style: "mapbox://styles/mapbox/outdoors-v12",
           center: route[0],
           zoom: 11.5,
           preserveDrawingBuffer: true,
@@ -208,6 +223,52 @@ function RouteMap({
   }, [token, prefersReducedMotion, failed, route, notePoint]);
 
   if (!token || failed) {
+    if (fallbackImageReady) {
+      return (
+        <div
+          className={[
+            embedded ? "" : "bg-white",
+            heightClass,
+            roundedClass,
+            "relative w-full overflow-hidden border border-[rgba(16,24,40,0.08)] bg-[#f9fafb]",
+          ].join(" ")}
+          role="img"
+          aria-label="India terrain map preview"
+        >
+          <img
+            src={fallbackImageSrc}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+
+          {/* Overlay route line + pins so the "QPort corridor" stays readable. */}
+          <svg viewBox="0 0 100 70" className="absolute inset-0 h-full w-full" aria-hidden="true">
+            <path
+              d="M 10 58 C 20 52, 24 44, 34 46 S 52 60, 60 48 S 78 28, 90 18"
+              fill="none"
+              stroke="rgba(20,71,230,0.18)"
+              strokeWidth="10"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 10 58 C 20 52, 24 44, 34 46 S 52 60, 60 48 S 78 28, 90 18"
+              fill="none"
+              stroke="#1447e6"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <circle cx="10" cy="58" r="3.2" fill="#ef4444" stroke="#fff" strokeWidth="1.5" />
+            <circle cx="90" cy="18" r="3.2" fill="#22c55e" stroke="#fff" strokeWidth="1.5" />
+            <circle cx="44" cy="50" r="2.8" fill="#f59e0b" stroke="#fff" strokeWidth="1.3" />
+          </svg>
+
+          <div className="absolute inset-0 bg-gradient-to-t from-white/35 via-transparent to-transparent" />
+        </div>
+      );
+    }
+
     return (
       <div
         className={[
