@@ -8,13 +8,11 @@ import {
   Sparkles,
   Truck,
   Users,
-  Camera,
-  Mic,
   Plus,
   Pause,
-  Square,
   Navigation,
   LocateFixed,
+  X,
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -48,6 +46,7 @@ function DesktopFrame({
   routePathRef,
   vehiclePathRef,
   prefersReducedMotion,
+  className = "",
 }) {
   const menu = useMemo(
     () => [
@@ -91,7 +90,13 @@ function DesktopFrame({
   const isRoutes = active === "routes";
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-[rgba(16,24,40,0.10)] bg-white shadow-lift">
+    <div
+      className={[
+        "relative overflow-hidden rounded-[2rem] border border-[rgba(16,24,40,0.10)] bg-white shadow-lift",
+        "flex flex-col",
+        className,
+      ].join(" ")}
+    >
       {/* Window bar */}
       <div className="flex items-center justify-between border-b border-[rgba(16,24,40,0.08)] bg-[#fbfbfc] px-4 py-3">
         <div className="flex items-center gap-2">
@@ -105,9 +110,9 @@ function DesktopFrame({
         <div className="h-5 w-16" aria-hidden="true" />
       </div>
 
-      <div className="grid min-h-[420px] grid-cols-12">
+      <div className="grid flex-1 grid-cols-12">
         {/* Sidebar (matches real app labels) */}
-        <div className="col-span-4 border-r border-[rgba(16,24,40,0.10)] bg-[#101828] p-4 text-white md:col-span-3">
+        <div className="col-span-4 border-r border-[rgba(16,24,40,0.10)] bg-[#101828] p-4 text-white md:col-span-3 overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="font-display text-base font-semibold tracking-[-0.02em]">QPort</div>
             <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 font-mono text-[10px] tracking-[0.18em] text-white/70">
@@ -167,7 +172,7 @@ function DesktopFrame({
         </div>
 
         {/* Main */}
-        <div className="col-span-8 bg-[#fbfbfc] p-4 md:col-span-9">
+        <div className="col-span-8 bg-[#fbfbfc] p-4 md:col-span-9 overflow-hidden">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="font-mono text-[10px] tracking-[0.22em] text-[var(--muted)]">
@@ -409,18 +414,8 @@ function PhoneFrame({ title, subtitle, children }) {
 function MobileSurveyPreview({ pathRef, prefersReducedMotion }) {
   return (
     <PhoneFrame title="Recording" subtitle="SURVEY">
-      <div className="relative overflow-hidden rounded-2xl border border-[rgba(16,24,40,0.10)] bg-[#f9fafb]">
-        <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-[rgba(16,24,40,0.10)] bg-white/85 px-3 py-1.5 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)] shadow-soft">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-          GPS LOCK
-        </div>
-
-        <div className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-[rgba(16,24,40,0.10)] bg-white/85 px-3 py-1.5 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)] shadow-soft">
-          <span className={["h-1.5 w-1.5 rounded-full bg-[var(--accent)]", prefersReducedMotion ? "" : "animate-pulseSoft"].join(" ")} aria-hidden="true" />
-          REC
-        </div>
-
-        <svg viewBox="0 0 100 120" className="h-[260px] w-full" role="img" aria-label="Survey map">
+      <div className="relative h-[420px] overflow-hidden rounded-2xl border border-[rgba(16,24,40,0.10)] bg-[#f9fafb]">
+        <svg viewBox="0 0 100 140" className="absolute inset-0 h-full w-full" role="img" aria-label="Survey map">
           <defs>
             <pattern id="gridM1" width="10" height="10" patternUnits="userSpaceOnUse">
               <path
@@ -431,77 +426,118 @@ function MobileSurveyPreview({ pathRef, prefersReducedMotion }) {
                 strokeWidth="0.4"
               />
             </pattern>
+            <linearGradient id="routeM1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#1447e6" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#003983" stopOpacity="0.95" />
+            </linearGradient>
           </defs>
-          <rect x="0" y="0" width="100" height="120" rx="10" fill="#ffffff" />
-          <rect x="0" y="0" width="100" height="120" rx="10" fill="url(#gridM1)" opacity="0.9" />
+          <rect x="0" y="0" width="100" height="140" rx="10" fill="#ffffff" />
+          <rect x="0" y="0" width="100" height="140" rx="10" fill="url(#gridM1)" opacity="0.95" />
           <path
-            d="M 18 104 C 22 88, 36 88, 42 74 S 54 52, 62 54 S 74 66, 84 46 S 88 18, 88 18"
+            d="M 18 122 C 22 108, 34 104, 40 92 S 52 68, 62 72 S 72 86, 82 62 S 88 26, 88 26"
             fill="none"
             stroke="rgba(20,71,230,0.12)"
-            strokeWidth="9"
+            strokeWidth="10"
             strokeLinecap="round"
           />
           <path
             ref={pathRef}
-            d="M 18 104 C 22 88, 36 88, 42 74 S 54 52, 62 54 S 74 66, 84 46 S 88 18, 88 18"
+            d="M 18 122 C 22 108, 34 104, 40 92 S 52 68, 62 72 S 72 86, 82 62 S 88 26, 88 26"
             fill="none"
-            stroke="#1447e6"
-            strokeWidth="3"
+            stroke="url(#routeM1)"
+            strokeWidth="3.2"
             strokeLinecap="round"
           />
-          <circle cx="18" cy="104" r="3" fill="#008236" stroke="#fff" strokeWidth="1.4" />
-          <circle cx="88" cy="18" r="3" fill="#ff6b35" stroke="#fff" strokeWidth="1.4" />
-          <circle cx="42" cy="74" r="2.6" fill="#ff6b35" opacity="0.95" />
-          <circle cx="62" cy="54" r="2.6" fill="#ff6b35" opacity="0.95" />
-          <circle cx="84" cy="46" r="2.6" fill="#ff6b35" opacity="0.95" />
+          <circle cx="18" cy="122" r="3.2" fill="#4CAF50" stroke="#fff" strokeWidth="1.6" />
+          <circle cx="88" cy="26" r="3.2" fill="#FF6B35" stroke="#fff" strokeWidth="1.6" />
+          <circle cx="40" cy="92" r="2.8" fill="#FF6B35" opacity="0.95" />
+          <circle cx="62" cy="72" r="2.8" fill="#FF6B35" opacity="0.95" />
+          <circle cx="82" cy="62" r="2.8" fill="#FF6B35" opacity="0.95" />
         </svg>
 
-        <div className="border-t border-[rgba(16,24,40,0.08)] bg-white px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="font-mono text-[10px] tracking-[0.22em] text-[var(--muted)]">DISTANCE</div>
-            <div className="text-xs font-semibold tracking-tight text-[#101828]">12.6 km</div>
+        {/* Gradient scrim (matches real app behavior) */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/50 to-transparent" aria-hidden="true" />
+
+        {/* GPS Connected pill (top center) */}
+        <div className="absolute left-1/2 top-4 z-10 -translate-x-1/2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(16,24,40,0.10)] bg-white/95 px-4 py-2 shadow-soft">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#4CAF50]" aria-hidden="true" />
+            <span className="text-xs font-semibold tracking-[-0.01em] text-[#1F2937]">
+              GPS Connected
+            </span>
           </div>
-          <div className="mt-2 grid grid-cols-3 gap-2">
+        </div>
+
+        {/* Recording status (top right) */}
+        <div className="absolute right-4 top-4 z-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(16,24,40,0.10)] bg-white/90 px-3 py-2 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)] shadow-soft">
+            <span
+              className={["h-1.5 w-1.5 rounded-full bg-[var(--accent)]", prefersReducedMotion ? "" : "animate-pulseSoft"].join(" ")}
+              aria-hidden="true"
+            />
+            REC
+          </div>
+        </div>
+
+        {/* Re-center button (right, above controls) */}
+        <div className="absolute bottom-[170px] right-4 z-10">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-[rgba(16,24,40,0.10)] bg-white px-3 py-2 shadow-soft">
+            <LocateFixed size={16} className="text-[var(--brand-bright)]" aria-hidden="true" />
+            <span className="text-xs font-semibold tracking-tight text-[#1447e6]">Re-center</span>
+          </div>
+        </div>
+
+        {/* Bottom recording controls (enhanced, but aligned to app layout) */}
+        <div className="absolute inset-x-0 bottom-0 z-10 rounded-t-[1.75rem] bg-[#1E2530] px-4 pb-4 pt-4">
+          <div className="text-center">
+            <div className="text-sm font-semibold tracking-[-0.02em] text-white">Tracking Active</div>
+            <div className="mt-1 text-xs text-white/60" data-cursor="text">
+              Recording your route...
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(16,24,40,0.10)] bg-[#fbfbfc] px-3 py-2 text-xs font-semibold text-[#101828]"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#2563EB] px-3 text-sm font-semibold text-white shadow-soft"
             >
-              <Pause size={14} aria-hidden="true" />
-              Pause
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(20,71,230,0.20)] bg-[rgba(20,71,230,0.06)] px-3 py-2 text-xs font-semibold text-[#1447e6]"
-            >
-              <Plus size={14} aria-hidden="true" />
+              <Plus size={18} aria-hidden="true" />
               Note
             </button>
             <button
               type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(255,107,53,0.20)] bg-[rgba(255,107,53,0.06)] px-3 py-2 text-xs font-semibold text-[#c84c21]"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#E07B38] px-3 text-sm font-semibold text-white shadow-soft"
             >
-              <Square size={14} aria-hidden="true" />
-              Finish
+              <Pause size={18} aria-hidden="true" />
+              Pause
             </button>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {[
-              { Icon: Camera, label: "Photo" },
-              { Icon: Mic, label: "Voice" },
-              { Icon: Navigation, label: "Point" },
-            ].map((it) => {
-              const Icon = it.Icon;
-              return (
-                <span
-                  key={it.label}
-                  className="inline-flex items-center gap-2 rounded-full border border-[rgba(16,24,40,0.10)] bg-[#f9fafb] px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)]"
-                >
-                  <Icon size={12} aria-hidden="true" />
-                  {it.label.toUpperCase()}
-                </span>
-              );
-            })}
+          <button
+            type="button"
+            className="mt-3 inline-flex h-11 w-full items-center justify-center gap-3 rounded-2xl bg-[#D44B4B] px-4 text-sm font-semibold text-white shadow-soft"
+          >
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-[4px] bg-white/90" aria-hidden="true">
+              <span className="h-2.5 w-2.5 rounded-[2px] bg-[#D44B4B]" />
+            </span>
+            Stop &amp; Save
+          </button>
+
+          <div className="mt-4 h-px w-full bg-white/10" aria-hidden="true" />
+
+          <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+            <div>
+              <div className="text-lg font-bold tracking-tight text-[#60A5FA]">1284</div>
+              <div className="font-mono text-[10px] tracking-[0.18em] text-white/60">POINTS</div>
+            </div>
+            <div>
+              <div className="text-lg font-bold tracking-tight text-white">12</div>
+              <div className="font-mono text-[10px] tracking-[0.18em] text-white/60">NOTES</div>
+            </div>
+            <div>
+              <div className="text-lg font-bold tracking-tight text-[#FBBF24]">6</div>
+              <div className="font-mono text-[10px] tracking-[0.18em] text-white/60">PHOTOS</div>
+            </div>
           </div>
         </div>
       </div>
@@ -512,23 +548,8 @@ function MobileSurveyPreview({ pathRef, prefersReducedMotion }) {
 function MobileDriverPreview({ pathRef, prefersReducedMotion }) {
   return (
     <PhoneFrame title="Navigation" subtitle="DRIVER">
-      <div className="relative overflow-hidden rounded-2xl border border-[rgba(16,24,40,0.10)] bg-[#f9fafb]">
-        <div className="absolute left-4 top-4 z-10 rounded-2xl border border-[rgba(16,24,40,0.10)] bg-white/92 px-3 py-2 shadow-soft">
-          <div className="font-mono text-[10px] tracking-[0.22em] text-[var(--muted)]">NEXT</div>
-          <div className="mt-1 text-xs font-semibold tracking-tight text-[#101828]">
-            Turn left in 250 m
-          </div>
-          <div className="mt-1 text-[11px] text-[#4a5565]" data-cursor="text">
-            NH-48, stay in lane.
-          </div>
-        </div>
-
-        <div className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-[rgba(16,24,40,0.10)] bg-white/85 px-3 py-1.5 font-mono text-[10px] tracking-[0.18em] text-[var(--muted)] shadow-soft">
-          <span className={["h-1.5 w-1.5 rounded-full bg-[var(--brand-bright)]", prefersReducedMotion ? "" : "animate-pulseSoft"].join(" ")} aria-hidden="true" />
-          LIVE
-        </div>
-
-        <svg viewBox="0 0 100 120" className="h-[260px] w-full" role="img" aria-label="Navigation map">
+      <div className="relative h-[420px] overflow-hidden rounded-2xl border border-[rgba(16,24,40,0.10)] bg-[#f9fafb]">
+        <svg viewBox="0 0 100 140" className="absolute inset-0 h-full w-full" role="img" aria-label="Navigation map">
           <defs>
             <pattern id="gridM2" width="10" height="10" patternUnits="userSpaceOnUse">
               <path
@@ -540,45 +561,77 @@ function MobileDriverPreview({ pathRef, prefersReducedMotion }) {
               />
             </pattern>
           </defs>
-          <rect x="0" y="0" width="100" height="120" rx="10" fill="#ffffff" />
-          <rect x="0" y="0" width="100" height="120" rx="10" fill="url(#gridM2)" opacity="0.9" />
+          <rect x="0" y="0" width="100" height="140" rx="10" fill="#ffffff" />
+          <rect x="0" y="0" width="100" height="140" rx="10" fill="url(#gridM2)" opacity="0.95" />
           <path
-            d="M 14 98 C 20 82, 32 78, 40 66 S 54 46, 64 50 S 74 62, 84 44 S 90 22, 90 22"
+            d="M 14 116 C 20 100, 32 92, 40 80 S 54 58, 64 64 S 74 78, 84 58 S 90 30, 90 30"
             fill="none"
             stroke="rgba(20,71,230,0.12)"
-            strokeWidth="9"
+            strokeWidth="10"
             strokeLinecap="round"
           />
           <path
             ref={pathRef}
-            d="M 14 98 C 20 82, 32 78, 40 66 S 54 46, 64 50 S 74 62, 84 44 S 90 22, 90 22"
+            d="M 14 116 C 20 100, 32 92, 40 80 S 54 58, 64 64 S 74 78, 84 58 S 90 30, 90 30"
             fill="none"
             stroke="#1447e6"
-            strokeWidth="3"
+            strokeWidth="3.2"
             strokeLinecap="round"
           />
-          <circle cx="64" cy="50" r="6.2" fill="rgba(20,71,230,0.10)" />
-          <circle cx="64" cy="50" r="3" fill="#101828" stroke="#fff" strokeWidth="1.4" />
+
+          {/* Truck position */}
+          <circle cx="64" cy="64" r="7.8" fill="rgba(20,71,230,0.10)" />
+          <circle cx="64" cy="64" r="3.2" fill="#101828" stroke="#fff" strokeWidth="1.6" />
         </svg>
 
-        <div className="border-t border-[rgba(16,24,40,0.08)] bg-white px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-semibold tracking-tight text-[#101828]">ETA 18:40</div>
-            <div className="font-mono text-[10px] tracking-[0.22em] text-[var(--muted)]">42 KM LEFT</div>
-          </div>
-
-          <div className="mt-3 flex items-center justify-between rounded-2xl border border-[rgba(16,24,40,0.10)] bg-[#fbfbfc] px-3 py-2">
-            <span className="text-xs font-semibold tracking-tight text-[#101828]">Recenter</span>
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(16,24,40,0.10)] bg-white">
-              <LocateFixed size={16} className="text-[var(--brand-bright)]" aria-hidden="true" />
-            </span>
-          </div>
-
-          <div className="mt-3 rounded-2xl border border-[rgba(255,107,53,0.18)] bg-[rgba(255,107,53,0.06)] px-3 py-2">
-            <div className="font-mono text-[10px] tracking-[0.22em] text-[#c84c21]">ALERT</div>
-            <div className="mt-1 text-xs leading-relaxed text-[#4a5565]" data-cursor="text">
-              Deviation detected. Return to corridor within 200 m.
+        {/* Maneuver (top) */}
+        <div className="absolute left-4 right-4 top-4 z-10 rounded-2xl border border-[rgba(16,24,40,0.10)] bg-white/92 px-4 py-3 shadow-soft">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="font-mono text-[10px] tracking-[0.22em] text-[var(--muted)]">NEXT</div>
+              <div className="mt-1 text-sm font-semibold tracking-tight text-[#101828]">
+                Turn left in 250 m
+              </div>
+              <div className="mt-1 text-xs text-[#4a5565]" data-cursor="text">
+                Stay on NH-48.
+              </div>
             </div>
+            <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[rgba(16,24,40,0.10)] bg-[#f9fafb]">
+              <Navigation size={16} className="text-[var(--brand-bright)]" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+
+        {/* Proximity note (during navigation) */}
+        <div className="absolute left-4 bottom-[96px] z-10 rounded-2xl border border-[rgba(255,107,53,0.20)] bg-[rgba(255,107,53,0.10)] px-4 py-3">
+          <div className="font-mono text-[10px] tracking-[0.22em] text-[#c84c21]">NOTE</div>
+          <div className="mt-1 text-xs font-semibold tracking-tight text-[#101828]">
+            Bridge clearance ahead
+          </div>
+          <div className="mt-1 text-xs text-[#4a5565]" data-cursor="text">
+            14.8 ft max. Escort required.
+          </div>
+        </div>
+
+        {/* Navigation bottom banner (matches app) */}
+        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-4">
+          <div className="flex items-center gap-3 rounded-2xl bg-[#1C1C1E] px-3 py-3 shadow-lift">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#2C2C2E]">
+              <LocateFixed size={22} className="text-white" aria-hidden="true" />
+            </div>
+            <div className="flex-1 text-center">
+              <div className="text-xl font-bold tracking-tight text-white">6:40 PM</div>
+              <div className="text-sm text-white/55" data-cursor="text">
+                2h 18min • 42.0 km
+              </div>
+            </div>
+            <button
+              type="button"
+              className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#2C2C2E]"
+              aria-label="Stop navigation"
+            >
+              <X size={22} className="text-[#FF453A]" aria-hidden="true" />
+            </button>
           </div>
         </div>
       </div>
@@ -652,7 +705,7 @@ export function ProductScreens({ prefersReducedMotion = false }) {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-12">
+        <div className="mt-10 grid gap-6 lg:grid-cols-12 lg:items-stretch">
           <div className="lg:col-span-7" data-screens-reveal>
             <DesktopFrame
               active={tab}
@@ -660,18 +713,26 @@ export function ProductScreens({ prefersReducedMotion = false }) {
               routePathRef={routePathRef}
               vehiclePathRef={vehiclePathRef}
               prefersReducedMotion={prefersReducedMotion}
+              className="lg:h-[620px]"
             />
           </div>
 
-          <div className="grid gap-6 lg:col-span-5" data-screens-reveal>
-            <MobileSurveyPreview
-              pathRef={mobileSurveyPathRef}
-              prefersReducedMotion={prefersReducedMotion}
-            />
-            <MobileDriverPreview
-              pathRef={mobileNavPathRef}
-              prefersReducedMotion={prefersReducedMotion}
-            />
+          <div className="lg:col-span-5" data-screens-reveal>
+            {/* Mobile device stack: overlap on desktop to avoid awkward whitespace. */}
+            <div className="grid gap-6 lg:relative lg:h-[620px] lg:overflow-visible">
+              <div className="lg:absolute lg:left-0 lg:top-0 lg:w-[92%] lg:max-w-[380px] lg:origin-top-left lg:scale-[0.94]">
+                <MobileSurveyPreview
+                  pathRef={mobileSurveyPathRef}
+                  prefersReducedMotion={prefersReducedMotion}
+                />
+              </div>
+              <div className="lg:absolute lg:bottom-0 lg:right-0 lg:w-[92%] lg:max-w-[380px] lg:origin-bottom-right lg:scale-[0.94]">
+                <MobileDriverPreview
+                  pathRef={mobileNavPathRef}
+                  prefersReducedMotion={prefersReducedMotion}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
