@@ -3,6 +3,11 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   BarChart3,
+  ChevronDown,
+  Download,
+  Pencil,
+  Scissors,
+  GitMerge,
   ListTodo,
   Route as RouteIcon,
   Sparkles,
@@ -17,26 +22,254 @@ import {
 
 gsap.registerPlugin(ScrollTrigger);
 
-function SegmentTabs({ value, onChange, items = [] }) {
+function loadMapboxGL() {
+  if (typeof window === "undefined") return Promise.reject(new Error("No window"));
+  if (window.mapboxgl) return Promise.resolve(window.mapboxgl);
+  if (window.__qportMapboxPromise) return window.__qportMapboxPromise;
+
+  window.__qportMapboxPromise = new Promise((resolve, reject) => {
+    // CSS (once)
+    const cssId = "qport-mapboxgl-css";
+    if (!document.getElementById(cssId)) {
+      const link = document.createElement("link");
+      link.id = cssId;
+      link.rel = "stylesheet";
+      link.href = "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css";
+      document.head.appendChild(link);
+    }
+
+    // Script (once)
+    const scriptId = "qport-mapboxgl-js";
+    if (document.getElementById(scriptId)) {
+      const check = () => {
+        if (window.mapboxgl) resolve(window.mapboxgl);
+        else window.setTimeout(check, 50);
+      };
+      check();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.async = true;
+    script.src = "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js";
+    script.onload = () => resolve(window.mapboxgl);
+    script.onerror = () => reject(new Error("Failed to load Mapbox GL JS"));
+    document.head.appendChild(script);
+  });
+
+  return window.__qportMapboxPromise;
+}
+
+function RouteMap({
+  prefersReducedMotion = false,
+  embedded = false,
+  heightClass = "h-[420px] md:h-[560px]",
+  roundedClass = "rounded-xl",
+}) {
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef([]);
+  const [failed, setFailed] = useState(false);
+
+  const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
+
+  const route = useMemo(
+    () => [
+      // Pune, India (Viman Nagar → Dhanori-ish) — representative corridor geometry.
+      [73.9152, 18.5676],
+      [73.9138, 18.5696],
+      [73.9112, 18.5712],
+      [73.9082, 18.5724],
+      [73.9056, 18.5748],
+      [73.9039, 18.5784],
+      [73.9048, 18.5822],
+      [73.9061, 18.5862],
+      [73.9074, 18.5902],
+      [73.9084, 18.5946],
+      [73.9093, 18.5984],
+    ],
+    []
+  );
+
+  const notePoint = useMemo(() => route[5], [route]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (!token) return;
+    if (failed) return;
+
+    let alive = true;
+
+    const boot = async () => {
+      try {
+        const mapboxgl = await loadMapboxGL();
+        if (!alive) return;
+
+        mapboxgl.accessToken = token;
+
+        const map = new mapboxgl.Map({
+          container: el,
+          // Close to the real app feel: light basemap, low contrast.
+          style: "mapbox://styles/mapbox/light-v11",
+          center: route[0],
+          zoom: 11.5,
+          preserveDrawingBuffer: true,
+          attributionControl: true,
+        });
+
+        mapRef.current = map;
+
+        // Keep scroll behavior clean on a landing page.
+        map.scrollZoom.disable();
+        map.dragRotate.disable();
+        map.touchZoomRotate.disableRotation();
+
+        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+
+        map.on("load", () => {
+          if (!alive) return;
+
+          // Fit route nicely with padding to mimic the real app framing.
+          const bounds = route.reduce(
+            (b, c) => b.extend(c),
+            new mapboxgl.LngLatBounds(route[0], route[0])
+          );
+          map.fitBounds(bounds, { padding: 70, duration: prefersReducedMotion ? 0 : 650 });
+
+          // Route line (glow + core)
+          map.addSource("qport-demo-route", {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              geometry: { type: "LineString", coordinates: route },
+              properties: {},
+            },
+          });
+
+          map.addLayer({
+            id: "qport-demo-route-glow",
+            type: "line",
+            source: "qport-demo-route",
+            layout: { "line-join": "round", "line-cap": "round" },
+            paint: {
+              "line-color": "#1447e6",
+              "line-width": 10,
+              "line-opacity": 0.16,
+            },
+          });
+
+          map.addLayer({
+            id: "qport-demo-route-core",
+            type: "line",
+            source: "qport-demo-route",
+            layout: { "line-join": "round", "line-cap": "round" },
+            paint: {
+              "line-color": "#1447e6",
+              "line-width": 4,
+              "line-opacity": 0.92,
+            },
+          });
+
+          // Start / End markers (Mapbox default teardrop markers, matches the real app feel).
+          const start = new mapboxgl.Marker({ color: "#ef4444" }).setLngLat(route[0]).addTo(map);
+          const end = new mapboxgl.Marker({ color: "#22c55e" })
+            .setLngLat(route[route.length - 1])
+            .addTo(map);
+
+          // Note marker (small amber dot)
+          const noteEl = document.createElement("div");
+          noteEl.style.width = "16px";
+          noteEl.style.height = "16px";
+          noteEl.style.borderRadius = "999px";
+          noteEl.style.background = "#f59e0b";
+          noteEl.style.border = "3px solid #ffffff";
+          noteEl.style.boxShadow = "0 10px 22px -16px rgba(16,24,40,0.6)";
+          const note = new mapboxgl.Marker({ element: noteEl }).setLngLat(notePoint).addTo(map);
+
+          markersRef.current = [start, end, note];
+
+          // Ensure correct sizing after first paint.
+          window.setTimeout(() => map.resize(), 60);
+        });
+      } catch (e) {
+        if (!alive) return;
+        setFailed(true);
+      }
+    };
+
+    boot();
+
+    return () => {
+      alive = false;
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [token, prefersReducedMotion, failed, route, notePoint]);
+
+  if (!token || failed) {
+    return (
+      <div
+        className={[
+          embedded ? "" : "bg-white",
+          heightClass,
+          roundedClass,
+          "w-full overflow-hidden border border-[rgba(16,24,40,0.08)] bg-[#f9fafb]",
+        ].join(" ")}
+        role="img"
+        aria-label="Map preview"
+      >
+        {/* Minimal fallback: keeps layout consistent if token/script is missing. */}
+        <svg viewBox="0 0 100 70" className="h-full w-full">
+          <defs>
+            <pattern id="gridWB" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path
+                d="M 10 0 H 0 V 10"
+                fill="none"
+                stroke="#101828"
+                strokeOpacity="0.06"
+                strokeWidth="0.4"
+              />
+            </pattern>
+          </defs>
+          <rect x="0" y="0" width="100" height="70" rx="8" fill="#ffffff" />
+          <rect x="0" y="0" width="100" height="70" rx="8" fill="url(#gridWB)" opacity="0.95" />
+          <path
+            d="M 10 58 C 20 52, 24 44, 34 46 S 52 60, 60 48 S 78 28, 90 18"
+            fill="none"
+            stroke="rgba(20,71,230,0.16)"
+            strokeWidth="8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 10 58 C 20 52, 24 44, 34 46 S 52 60, 60 48 S 78 28, 90 18"
+            fill="none"
+            stroke="#1447e6"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+          />
+          <circle cx="10" cy="58" r="3" fill="#ef4444" stroke="#fff" strokeWidth="1.5" />
+          <circle cx="90" cy="18" r="3" fill="#22c55e" stroke="#fff" strokeWidth="1.5" />
+          <circle cx="44" cy="50" r="2.6" fill="#f59e0b" stroke="#fff" strokeWidth="1.3" />
+        </svg>
+      </div>
+    );
+  }
+
   return (
-    <div className="inline-flex rounded-full border border-[rgba(16,24,40,0.10)] bg-white p-1">
-      {items.map((it) => {
-        const active = it.value === value;
-        return (
-          <button
-            key={it.value}
-            type="button"
-            onClick={() => onChange(it.value)}
-            className={[
-              "rounded-full px-3 py-1.5 text-xs font-semibold tracking-[-0.01em] transition-colors",
-              active ? "bg-[#101828] text-white" : "text-[var(--muted)] hover:text-[var(--text)]",
-            ].join(" ")}
-          >
-            {it.label}
-          </button>
-        );
-      })}
-    </div>
+    <div
+      ref={containerRef}
+      className={[
+        heightClass,
+        roundedClass,
+        "w-full overflow-hidden border border-[rgba(16,24,40,0.06)] bg-[#f9fafb]",
+      ].join(" ")}
+    />
   );
 }
 
@@ -195,7 +428,7 @@ function DesktopFrame({
 
           <div className="relative mt-4 grid gap-4 md:grid-cols-12">
             {/* Views stack; we keep both mounted so SVG lengths are measurable for animation. */}
-            <div className="md:col-span-7">
+            <div className="md:col-span-8">
               {/* Map panel */}
               <div className="relative overflow-hidden rounded-[1.25rem] border border-[rgba(16,24,40,0.10)] bg-white p-3">
                 <div className="flex items-center justify-between">
@@ -207,70 +440,13 @@ function DesktopFrame({
                   </span>
                 </div>
 
-                <div className="mt-3 aspect-[16/10] w-full overflow-hidden rounded-xl border border-[rgba(16,24,40,0.06)] bg-[#f9fafb]">
-                  <svg viewBox="0 0 100 62" className="h-full w-full" role="img" aria-label="Map preview">
-                    <defs>
-                      <pattern id="gridD" width="8" height="8" patternUnits="userSpaceOnUse">
-                        <path
-                          d="M 8 0 H 0 V 8"
-                          fill="none"
-                          stroke="#101828"
-                          strokeOpacity="0.06"
-                          strokeWidth="0.45"
-                        />
-                      </pattern>
-                      <linearGradient id="routeGlow" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor="#1447e6" stopOpacity="0.15" />
-                        <stop offset="100%" stopColor="#1447e6" stopOpacity="0.02" />
-                      </linearGradient>
-                    </defs>
-
-                    <rect x="0" y="0" width="100" height="62" rx="8" fill="#ffffff" />
-                    <rect x="0" y="0" width="100" height="62" rx="8" fill="url(#gridD)" opacity="0.85" />
-                    <path
-                      d="M 12 50 C 22 44, 26 32, 36 34 S 52 48, 61 40 S 78 22, 88 18"
-                      fill="none"
-                      stroke="url(#routeGlow)"
-                      strokeWidth="8.2"
-                      strokeLinecap="round"
-                    />
-
-                    {/* Routes view line */}
-                    <g style={{ opacity: isRoutes ? 1 : 0, transition: "opacity 220ms ease-out" }}>
-                      <path
-                        ref={routePathRef}
-                        d="M 12 50 C 22 44, 26 32, 36 34 S 52 48, 61 40 S 78 22, 88 18"
-                        fill="none"
-                        stroke="#1447e6"
-                        strokeWidth="2.8"
-                        strokeLinecap="round"
-                      />
-                      <circle cx="12" cy="50" r="2.8" fill="#008236" stroke="#fff" strokeWidth="1.5" />
-                      <circle cx="88" cy="18" r="2.8" fill="#ff6b35" stroke="#fff" strokeWidth="1.5" />
-                      <circle cx="34" cy="35" r="2.5" fill="#ff6b35" opacity="0.9" />
-                      <circle cx="56" cy="46" r="2.5" fill="#ff6b35" opacity="0.9" />
-                      <circle cx="74" cy="28" r="2.5" fill="#ff6b35" opacity="0.9" />
-                    </g>
-
-                    {/* Vehicles view line + truck marker */}
-                    <g style={{ opacity: isRoutes ? 0 : 1, transition: "opacity 220ms ease-out" }}>
-                      <path
-                        ref={vehiclePathRef}
-                        d="M 14 46 C 22 42, 28 30, 40 32 S 60 46, 70 38 S 82 26, 92 22"
-                        fill="none"
-                        stroke="#1447e6"
-                        strokeWidth="2.8"
-                        strokeLinecap="round"
-                      />
-                      <circle cx="70" cy="38" r="5.2" fill="rgba(20,71,230,0.10)" />
-                      <circle cx="70" cy="38" r="2.8" fill="#101828" stroke="#fff" strokeWidth="1.4" />
-                      <path
-                        d="M 68.7 37.6 h 2.6 v 1.6 h -2.6 Z"
-                        fill="#fff"
-                        opacity="0.95"
-                      />
-                    </g>
-                  </svg>
+                <div className="mt-3">
+                  <RouteMap
+                    embedded
+                    prefersReducedMotion={prefersReducedMotion}
+                    heightClass="h-[420px] md:h-[620px]"
+                    roundedClass="rounded-xl"
+                  />
                 </div>
 
                 {!prefersReducedMotion && (
@@ -288,7 +464,7 @@ function DesktopFrame({
               </div>
             </div>
 
-            <div className="md:col-span-5">
+            <div className="md:col-span-4">
               {/* Side panels */}
               <div
                 className={[
