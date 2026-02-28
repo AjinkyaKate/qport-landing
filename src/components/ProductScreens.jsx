@@ -22,6 +22,37 @@ import {
 
 gsap.registerPlugin(ScrollTrigger);
 
+function SegmentTabs({ value, onChange, items = [] }) {
+  return (
+    <div
+      className="inline-flex items-center rounded-full border border-[rgba(16,24,40,0.10)] bg-white/80 p-1 shadow-soft"
+      role="tablist"
+      aria-label="View selection"
+    >
+      {items.map((it) => {
+        const active = it.value === value;
+        return (
+          <button
+            key={it.value}
+            type="button"
+            onClick={() => onChange?.(it.value)}
+            className={[
+              "rounded-full px-3 py-1.5 text-xs font-semibold tracking-tight transition-colors",
+              active
+                ? "bg-[#101828] text-white"
+                : "text-[var(--muted)] hover:text-[var(--text)]",
+            ].join(" ")}
+            role="tab"
+            aria-selected={active}
+          >
+            {it.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function loadMapboxGL() {
   if (typeof window === "undefined") return Promise.reject(new Error("No window"));
   if (window.mapboxgl) return Promise.resolve(window.mapboxgl);
