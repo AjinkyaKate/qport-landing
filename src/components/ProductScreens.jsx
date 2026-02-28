@@ -2054,7 +2054,7 @@ function LiveCommandCenterFrame({ prefersReducedMotion, className = "" }) {
 
 export function ProductScreens({ prefersReducedMotion = false }) {
   const sectionRef = useRef(null);
-  const [view, setView] = useState("routes"); // routes | command-center
+  const [view, setView] = useState("command-center"); // routes | command-center
 
   useEffect(() => {
     const el = sectionRef.current;
