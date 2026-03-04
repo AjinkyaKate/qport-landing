@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Hero } from "../components/Hero";
 import { SocialProofBar } from "../components/SocialProofBar";
 import { Features } from "../components/Features";
+import { ProductScreens } from "../components/ProductScreens";
 import { HowItWorks } from "../components/HowItWorks";
 import { Philosophy } from "../components/Philosophy";
 import { FAQ } from "../components/FAQ";
@@ -30,6 +31,8 @@ export function HomePage({ introReady, prefersReducedMotion }) {
       <SocialProofBar />
 
       <Features prefersReducedMotion={prefersReducedMotion} />
+
+      <ProductScreens prefersReducedMotion={prefersReducedMotion} />
 
       <HowItWorks prefersReducedMotion={prefersReducedMotion} />
 

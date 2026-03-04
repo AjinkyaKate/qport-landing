@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { MagneticButton } from "./MagneticButton";
 import { HeroThree } from "./HeroThree";
+import { HeroWorkflow } from "./HeroWorkflow";
 import { UNSPLASH } from "../lib/unsplash";
 
 export function Hero({ introReady, prefersReducedMotion, ctaHref }) {
@@ -90,8 +91,9 @@ export function Hero({ introReady, prefersReducedMotion, ctaHref }) {
       </div>
 
       <div className="relative z-10 flex min-h-[100dvh] items-end px-6 pb-16 md:px-0 md:pb-20">
-        <div className="mx-auto w-[min(1100px,100%)] md:pl-16">
-          <div className="max-w-[680px] text-white text-center md:text-left">
+        <div className="mx-auto w-[min(1240px,100%)] md:px-16">
+          <div className="grid items-end gap-10 md:grid-cols-[1fr_460px]">
+            <div className="max-w-[680px] text-white text-center md:text-left">
             <h1
               data-hero-item
               className="font-display text-[clamp(3rem,5vw,6rem)] font-semibold tracking-[-0.05em] leading-[0.95]"
@@ -147,6 +149,12 @@ export function Hero({ introReady, prefersReducedMotion, ctaHref }) {
               <span className="font-mono">Split + merge with lineage</span>
               <span className="hidden h-3 w-px bg-white/20 md:inline-block" />
               <span className="font-mono">Reports built for wind ODC</span>
+            </div>
+          </div>
+
+            {/* Right-side workflow instrument (desktop only) */}
+            <div data-hero-item className="hidden md:block">
+              <HeroWorkflow prefersReducedMotion={prefersReducedMotion} />
             </div>
           </div>
         </div>

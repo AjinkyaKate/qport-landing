@@ -31,7 +31,8 @@ export const MagneticButton = forwardRef(function MagneticButton(
     };
 
     const onLeave = () => {
-      gsap.to(el, { x: 0, y: 0, duration: 0.6, ease: "elastic.out(1, 0.4)" });
+      // Clean & Precise: no bounce. Return to rest with a quiet ease.
+      gsap.to(el, { x: 0, y: 0, duration: 0.55, ease: "power2.out" });
     };
 
     el.addEventListener("mousemove", onMove);
@@ -65,4 +66,3 @@ export const MagneticButton = forwardRef(function MagneticButton(
     </button>
   );
 });
-

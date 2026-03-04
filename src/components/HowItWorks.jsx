@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Layers, Route as RouteIcon, Send } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function HowItWorks({ prefersReducedMotion }) {
   const sectionRef = useRef(null);
   const lineRef = useRef(null);
+  const stepIcons = useMemo(() => [RouteIcon, Layers, Send], []);
 
   const steps = useMemo(
     () => [
@@ -107,8 +109,10 @@ export function HowItWorks({ prefersReducedMotion }) {
             </svg>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {steps.map((s) => (
+            <div className="grid gap-6 md:grid-cols-3">
+            {steps.map((s, idx) => {
+              const Icon = stepIcons[idx] || RouteIcon;
+              return (
               <div
                 key={s.n}
                 data-step
@@ -118,7 +122,12 @@ export function HowItWorks({ prefersReducedMotion }) {
                   <div className="font-mono text-[2.1rem] leading-none tracking-[-0.02em] text-[var(--brand-bright)]">
                     {s.n}
                   </div>
-                  <div className="h-9 w-9 rounded-full bg-[rgba(20,71,230,0.08)]" />
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(16,24,40,0.10)] bg-[#f9fafb]"
+                    aria-hidden="true"
+                  >
+                    <Icon size={16} className="text-[var(--brand-bright)]" />
+                  </div>
                 </div>
                 <h4 className="mt-4 font-display text-lg font-semibold tracking-[-0.02em] text-[var(--text)]">
                   {s.title}
@@ -127,11 +136,11 @@ export function HowItWorks({ prefersReducedMotion }) {
                   {s.body}
                 </p>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </div>
     </section>
   );
 }
-
